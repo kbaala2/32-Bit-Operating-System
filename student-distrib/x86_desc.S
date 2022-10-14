@@ -89,6 +89,7 @@ gdt_desc_ptr:
     .word   gdt_bottom - gdt - 1             # sizeof(gdt) - 1
     .long   gdt 
 
+    .align 16
 ldt:
     .rept 4
     .quad 0
