@@ -24,4 +24,5 @@ void x87_FPU_fp_error();
 void alignment_check_exception();
 void machine_check_exception();
 void SIMD_fp_exception();
+void system_call();
 

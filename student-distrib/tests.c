@@ -45,6 +45,11 @@ int idt_test(){
 	return result;
 }
 
+static inline void assertion_failure(){
+	/* Use exception #15 for assertions, otherwise
+	   reserved by Intel */
+	asm volatile("int $0");
+}
 // add more tests here
 
 /* Checkpoint 2 tests */
