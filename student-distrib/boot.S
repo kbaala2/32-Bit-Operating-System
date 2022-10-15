@@ -44,7 +44,7 @@ keep_going:
 load_idt:
     lidt idt_desc_ptr
 
-    # Push the parameters that entry() expects (see kernel.c):
+    # Push the parameters that entry() expects (see kernel.c)
     # eax = multiboot magic
     # ebx = address of multiboot info struct
     pushl   %ebx

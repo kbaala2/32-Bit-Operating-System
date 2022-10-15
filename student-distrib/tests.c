@@ -14,9 +14,8 @@
 static inline void assertion_failure(){
 	/* Use exception #15 for assertions, otherwise
 	   reserved by Intel */
-	asm volatile("int $15");
+	asm volatile("int $8");
 }
-
 
 /* Checkpoint 1 tests */
 
@@ -45,12 +44,15 @@ int idt_test(){
 	return result;
 }
 
-static inline void assertion_failure(){
-	/* Use exception #15 for assertions, otherwise
-	   reserved by Intel */
-	asm volatile("int $0");
-}
 // add more tests here
+
+int div_zero_test(){
+	int i = 1;
+	int j = i/0;
+	int result = PASS;
+
+	return result;
+}
 
 /* Checkpoint 2 tests */
 /* Checkpoint 3 tests */
@@ -62,4 +64,5 @@ static inline void assertion_failure(){
 void launch_tests(){
 	TEST_OUTPUT("idt_test", idt_test());
 	// launch your tests here
+	TEST_OUTPUT("div_zero_test", div_zero_test());
 }

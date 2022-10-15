@@ -1,6 +1,6 @@
+#include "idt.h"
 #include "x86_desc.h"
 #include "lib.h"
-#include "idt.h"
 
 void div_by_zero_exception(){
     clear();
@@ -102,37 +102,38 @@ void system_call(){
     printf("System Call raised");
     while(1);
 }
-void kb_interrupt(){
+// void kb_interrupt(){
 
-}
-void rtc_interrupt(){
-    
-}
-extern void asm_link_kb();
-extern void asm_link_rtc();
+// }
+// void rtc_interrupt(){
+
+// }
+// void asm_link_kb();
+// void asm_link_rtc();
 
 // idt_desc_t idt_init;
 // idt_init.present = 0x1;
 // idt_init.dpl = 0x0;
 // idt_init.size = 0x1;
-
-SET_IDT_ENTRY(idt[0], div_by_zero_exception);
-SET_IDT_ENTRY(idt[1], debug_exception);
-SET_IDT_ENTRY(idt[2], NMI_exception);
-SET_IDT_ENTRY(idt[3], breakpoint_exception);
-SET_IDT_ENTRY(idt[4], overflow_exception);
-SET_IDT_ENTRY(idt[5], bound_range_exceeded_exception);
-SET_IDT_ENTRY(idt[6], invalid_opcode_exception);
-SET_IDT_ENTRY(idt[7], device_not_available_exception);
-SET_IDT_ENTRY(idt[8], double_fault_exception);
-SET_IDT_ENTRY(idt[9], coprocessor_segment_overrun);
-SET_IDT_ENTRY(idt[10], invalid_TSS_exception);
-SET_IDT_ENTRY(idt[11], segment_not_present_exception);
-SET_IDT_ENTRY(idt[12], stack_fault_exception);
-SET_IDT_ENTRY(idt[13], general_protection_exception);
-SET_IDT_ENTRY(idt[14], page_fault_exception);
-SET_IDT_ENTRY(idt[16], x87_FPU_fp_error);
-SET_IDT_ENTRY(idt[17], alignment_check_exception);
-SET_IDT_ENTRY(idt[18], machine_check_exception);
-SET_IDT_ENTRY(idt[19], SIMD_fp_exception);
-SET_IDT_ENTRY(idt[128], system_call);
+void initialize_idt(){
+    SET_IDT_ENTRY(idt[0], div_by_zero_exception);
+    SET_IDT_ENTRY(idt[1], debug_exception);
+    SET_IDT_ENTRY(idt[2], NMI_exception);
+    SET_IDT_ENTRY(idt[3], breakpoint_exception);
+    SET_IDT_ENTRY(idt[4], overflow_exception);
+    SET_IDT_ENTRY(idt[5], bound_range_exceeded_exception);
+    SET_IDT_ENTRY(idt[6], invalid_opcode_exception);
+    SET_IDT_ENTRY(idt[7], device_not_available_exception);
+    SET_IDT_ENTRY(idt[8], double_fault_exception);
+    SET_IDT_ENTRY(idt[9], coprocessor_segment_overrun);
+    SET_IDT_ENTRY(idt[10], invalid_TSS_exception);
+    SET_IDT_ENTRY(idt[11], segment_not_present_exception);
+    SET_IDT_ENTRY(idt[12], stack_fault_exception);
+    SET_IDT_ENTRY(idt[13], general_protection_exception);
+    SET_IDT_ENTRY(idt[14], page_fault_exception);
+    SET_IDT_ENTRY(idt[16], x87_FPU_fp_error);
+    SET_IDT_ENTRY(idt[17], alignment_check_exception);
+    SET_IDT_ENTRY(idt[18], machine_check_exception);
+    SET_IDT_ENTRY(idt[19], SIMD_fp_exception);
+    SET_IDT_ENTRY(idt[128], system_call);
+}
