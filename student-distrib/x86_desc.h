@@ -167,7 +167,7 @@ extern idt_desc_t idt[NUM_VEC];
 /* The descriptor used to load the IDTR */
 extern x86_desc_t idt_desc_ptr;
 
-/* Sets runtime parameters for an IDT entry */  //str = idt[6]
+/* Sets runtime parameters for an IDT entry */
 #define SET_IDT_ENTRY(str, handler)                              \
 do {                                                             \
     str.offset_31_16 = ((uint32_t)(handler) & 0xFFFF0000) >> 16; \

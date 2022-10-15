@@ -14,9 +14,8 @@
 static inline void assertion_failure(){
 	/* Use exception #15 for assertions, otherwise
 	   reserved by Intel */
-	asm volatile("int $15");
+	asm volatile("int $8");
 }
-
 
 /* Checkpoint 1 tests */
 
@@ -47,6 +46,23 @@ int idt_test(){
 
 // add more tests here
 
+int div_zero_test(){
+	TEST_HEADER;
+	int i = 1;
+	int j = i/0;
+	return FAIL;
+}
+
+int out_of_bound(){
+	// TEST_HEADER;
+	// int n[5] = {0, 0, 0, 0, 0};
+	// int i;
+	// for(i = 0; i < 7; i++){
+	// 	printf("%d", )
+	// }
+	// return FAIL;
+}
+
 /* Checkpoint 2 tests */
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
@@ -56,5 +72,8 @@ int idt_test(){
 /* Test suite entry point */
 void launch_tests(){
 	TEST_OUTPUT("idt_test", idt_test());
+	while(1);
 	// launch your tests here
+	//TEST_OUTPUT("div_zero_test", div_zero_test());
+	//TEST_OUTPUT("out_of_bound", out_of_bound());
 }
