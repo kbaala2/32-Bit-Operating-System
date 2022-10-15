@@ -63,13 +63,6 @@ int out_of_bound(){
 	// return FAIL;
 }
 
-// int seg_not_present(){
-// 	TEST_HEADER;
-// 	idt[33].present = 0;
-// 	while(1);
-// 	return FAIL;
-// }
-
 /* Checkpoint 2 tests */
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
@@ -79,8 +72,8 @@ int out_of_bound(){
 /* Test suite entry point */
 void launch_tests(){
 	TEST_OUTPUT("idt_test", idt_test());
+	while(1);
 	// launch your tests here
-	TEST_OUTPUT("div_zero_test", div_zero_test());
+	//TEST_OUTPUT("div_zero_test", div_zero_test());
 	//TEST_OUTPUT("out_of_bound", out_of_bound());
-	//TEST_OUTPUT("seg_not_present", seg_not_present());
 }

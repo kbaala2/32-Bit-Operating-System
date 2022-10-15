@@ -5,8 +5,6 @@
 #ifndef IDT_H
 #define IDT_H
 
-#ifndef ASM
 void initialize_idt(void);
-#endif /* ASM */
 
 #endif /* IDT_H */

@@ -2,6 +2,9 @@
 #include "x86_desc.h"
 #include "lib.h"
 
+extern void asm_link_kb(void);
+extern void asm_link_rtc(void);
+
 void div_by_zero_exception(){
     clear();
     printf("ddivide by zero exception raised");
@@ -124,21 +127,21 @@ void initialize_idt(){
         else{
             idt[i].present = 0x0;
         }
-        if(i == 128){
-            idt[i].dpl = 0x3;
+        if(i == 0x80){
+            idt[i].dpl = 0x3;   //sets dpl to 3 if idt entry is a system call
         }
         else{
-            idt[i].dpl = 0x0;
+            idt[i].dpl = 0x0;   //otherwise sets dpl to 0
         }
         idt[i].size = 0x1;
         idt[i].reserved0 = 0x0;
         idt[i].reserved1 = 0x1;
         idt[i].reserved2 = 0x1;
-        if((i >= 0x20) && (i <= 0x2F)){
+        if((i >= 0x20) && (i <= 0x2F)){ //sets reserved3 bit to 0 if idt entry is an interrupt
             idt[i].reserved3 = 0x0;
         }
         else{
-            idt[i].reserved3 = 0x1;
+            idt[i].reserved3 = 0x1; //otherwise set reserved3 bit to 1
         }
         idt[i].reserved4 = 0x0;
         idt[i].seg_selector = KERNEL_CS;
@@ -163,4 +166,7 @@ void initialize_idt(){
     SET_IDT_ENTRY(idt[18], machine_check_exception);
     SET_IDT_ENTRY(idt[19], SIMD_fp_exception);
     SET_IDT_ENTRY(idt[128], system_call);
+
+    SET_IDT_ENTRY(idt[33], asm_link_kb);   //kb interrupt
+    SET_IDT_ENTRY(idt[40], asm_link_rtc);   //rtc interrupt
 }
