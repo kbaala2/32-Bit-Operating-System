@@ -2,10 +2,11 @@
  * vim:ts=4 noexpandtab
  */
 
-#ifndef _IDT_H
-#define _IDT_H
+#ifndef IDT_H
+#define IDT_H
 
+#ifndef ASM
+void initialize_idt(void);
+#endif /* ASM */
 
-//extern void initialize_idt();
-
-#endif /* _IDT_H */
+#endif /* IDT_H */
