@@ -5,6 +5,6 @@
 #ifndef IDT_H
 #define IDT_H
 
-void initialize_idt(void);
+extern void initialize_idt(void);
 
 #endif /* IDT_H */
