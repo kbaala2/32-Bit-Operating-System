@@ -17,6 +17,9 @@
 /* Check if the bit BIT in FLAGS is set. */
 #define CHECK_FLAG(flags, bit)   ((flags) & (1 << (bit)))
 
+void page_init(void);
+void rtc_init(void);
+
 /* Check if MAGIC is valid and print the Multiboot information structure
    pointed by ADDR. */
 void entry(unsigned long magic, unsigned long addr) {
@@ -149,6 +152,9 @@ void entry(unsigned long magic, unsigned long addr) {
 
     /* Init RTC */
     rtc_init();
+
+    /* Init Paging */
+    page_init();
 
     /* Initialize devices, memory, filesystem, enable device interrupts on the
      * PIC, any other initialization stuff... */

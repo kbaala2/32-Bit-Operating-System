@@ -5,6 +5,7 @@
 
 .global asm_link_kb, asm_link_rtc
 
+#assembly wrapper to return interrupt handlers
 asm_link_kb:
     pushal
     call keyboard_handler

@@ -41,7 +41,7 @@ keep_going:
     movw    %cx, %fs
     movw    %cx, %gs
 
-load_idt:
+load_idt: #load idt
     lidt idt_desc_ptr
 
     # Push the parameters that entry() expects (see kernel.c)
