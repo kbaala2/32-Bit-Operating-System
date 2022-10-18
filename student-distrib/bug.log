@@ -1,0 +1,105 @@
+<=========================================================>
+<=================>    BUG LOG HEADER   <=================>
+<=========================================================>
+Assignment:
+    MP3
+CheckPoint:
+    CP1
+CreateTime:
+    2022.10.16
+
+<--------------------------------------------------------->
+                          BUG 1                          
+<--------------------------------------------------------->
+Time:
+    2022.10.16.
+Creator:
+    Dinal Gunaratne.
+Description:
+    OS is stuck in boot loop due to IDT setup.
+Solution:
+    Set the present bit to 0 for IDT vector 15.
+
+<--------------------------------------------------------->
+                          BUG 2                          
+<--------------------------------------------------------->
+Time:
+    2022.10.16.
+Creator:
+    Nikil Nambiar.
+Description:
+    IDT initialization not happening due to init function not existing.
+Solution:
+    Took out the include idt.h from the wrappers ASM file.
+
+<--------------------------------------------------------->
+                          BUG 3                          
+<--------------------------------------------------------->
+Time:
+    2022.10.16.
+Creator:
+    Raj Baala.
+Description:
+    Keyboard printing spaces between each character on press and release.
+Solution:
+    Included a conditional statement for putc that only allows that to happen on press.
+
+<--------------------------------------------------------->
+                          BUG 4                          
+<--------------------------------------------------------->
+Time:
+    2022.10.16.
+Creator:
+    Aryan Gupta.
+Description:
+    Interrupts not being enabled.
+Solution:
+    Had to uncomment an sti command in kernel.c.
+
+<--------------------------------------------------------->
+                          BUG 5                          
+<--------------------------------------------------------->
+Time:
+    2022.10.16.
+Creator:
+    Dinal Gunaratne.
+Description:
+    Paging causing boot loop.
+Solution:
+    Set the bits correctly for page directory entry for the 4MB kernel page.
+
+<--------------------------------------------------------->
+                          BUG 6                          
+<--------------------------------------------------------->
+Time:
+    2022.10.16.
+Creator:
+    Nikil Nambiar.
+Description:
+    Paging not being enabled for 4MB page.
+Solution:
+    Had to load the cr4 register in enablePaging assembly code.
+
+<--------------------------------------------------------->
+                          BUG 7                          
+<--------------------------------------------------------->
+Time:
+    2022.10.16.
+Creator:
+    Raj Baala.
+Description:
+    Structs for PDE's and PTE's not functioning correctly.
+Solution:
+    Made the structs packed instead of aligned.
+
+<--------------------------------------------------------->
+                          BUG 8                          
+<--------------------------------------------------------->
+Time:
+    2022.10.16.
+Creator:
+    Aryan Gupta.
+Description:
+    Keyboard keys are off by 1 letter on screen.
+Solution:
+    Forgot the character for 'i' in the map of keys.
