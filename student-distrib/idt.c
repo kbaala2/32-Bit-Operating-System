@@ -5,101 +5,200 @@
 extern void asm_link_kb(void);
 extern void asm_link_rtc(void);
 
+/* void div_by_zero_exception(void);
+ * Inputs: void
+ * Return Value: none
+ * Function: raises div by zero exception*/
 void div_by_zero_exception(){
     clear();
     printf(" divide by zero exception raised ");
     while(1);
 }
+
+/* void debug_exception(void);
+ * Inputs: void
+ * Return Value: none
+ * Function: raises debug exception*/
 void debug_exception(){
     clear();
     printf(" debug exception raised ");
     while(1);
 }
+
+/* void nmi_interrupt(void);
+ * Inputs: void
+ * Return Value: none
+ * Function: raises nmi interrupt*/
 void NMI_exception(){
     clear();
     printf(" non-maskable interrupt exception raised ");
     while(1);
 }
+
+/* void breakpoint_exception(void);
+ * Inputs: void
+ * Return Value: none
+ * Function: raises breakpoint exception*/
 void breakpoint_exception(){
     clear();
     printf(" breakpoint exception raised ");
     while(1);
 }
+
+/* void overflow_exception(void);
+ * Inputs: void
+ * Return Value: none
+ * Function: raises overflow exception*/
 void overflow_exception(){
     clear();
     printf(" overflow exception raised ");
     while(1);
 }
+
+/* void bounds_exception(void);
+ * Inputs: void
+ * Return Value: none
+ * Function: raises bounds exception*/
 void bound_range_exceeded_exception(){
     clear();
     printf(" bound range exceeded exception raised ");
     while(1);
 }
+
+/* void invalid_opcode_exception(void);
+ * Inputs: void
+ * Return Value: none
+ * Function: raises invalid opcode exception*/
 void invalid_opcode_exception(){
     clear();
     printf(" invalid opcode exception raised ");
     while(1);
 }
+
+/* void device_not_available_exception(void);
+ * Inputs: void
+ * Return Value: none
+ * Function: raises device not available exception*/
 void device_not_available_exception(){
     clear();
     printf(" device not available exception raised ");
     while(1);
 }
+
+/* void double_fault_exception(void);
+ * Inputs: void
+ * Return Value: none
+ * Function: raises double fault exception*/
 void double_fault_exception(){
     clear();
     printf(" double fault exception raised ");
     while(1);
 }
+
+/* void coprocessor_segment_overrun(void);
+ * Inputs: void
+ * Return Value: none
+ * Function: raises coprocessor segment overrun exception*/
 void coprocessor_segment_overrun(){
     clear();
     printf(" coprocessor segment overrun exception raised ");
     while(1);
 }
+
+/* void invalid_tss_exception(void);
+ * Inputs: void
+ * Return Value: none
+ * Function: raises invalid tss exception*/
 void invalid_TSS_exception(){
     clear();
     printf(" invalid TSS exception raised ");
     while(1);
 }
+
+/* void segment_not_present_exception(void);
+ * Inputs: void
+ * Return Value: none
+ * Function: raises segment not present exception*/
 void segment_not_present_exception(){
     clear();
     printf(" segment not present exception raised ");
     while(1);
 }
+
+/* void stack_segment_fault_exception(void);
+ * Inputs: void
+ * Return Value: none
+ * Function: raises stack segment fault exception*/
 void stack_fault_exception(){
     clear();
     printf(" stack fault exception raised ");
     while(1);
 }
+
+/* void general_protection_exception(void);
+ * Inputs: void
+ * Return Value: none
+ * Function: raises general protection exception*/
 void general_protection_exception(){
     clear();
     printf(" general protection exception raised ");
     while(1);
 }
+
+/* void page_fault_exception(void);
+ * Inputs: void
+ * Return Value: none
+ * Function: raises page fault exception*/
 void page_fault_exception(){
     clear();
     printf(" page-fault exception raised ");
     while(1);
 }
+
+/* void x87_FPU_fp_error(void);
+ * Inputs: void
+ * Return Value: none
+ * Function: raises floating point exception*/
 void x87_FPU_fp_error(){
     clear();
     printf(" x87 FPU floating-point exception raised ");
     while(1);
 }
+
+/* void alignment_check_exception(void);
+ * Inputs: void
+ * Return Value: none
+ * Function: raises alignment check exception*/
 void alignment_check_exception(){
     clear();
     printf(" alignment check exception raised ");
     while(1);
 }
+
+/* void machine_check_exception(void);
+ * Inputs: void
+ * Return Value: none
+ * Function: raises machine check exception*/
 void machine_check_exception(){
     clear();
     printf(" machine check exception raised ");
     while(1);
 }
+
+/* void SIMD_fp_exception(void);
+ * Inputs: void
+ * Return Value: none
+ * Function: raises SIMD floating point exception*/
 void SIMD_fp_exception(){
     clear();
     printf(" SIMD Floating-Point exception raised ");
     while(1);
 }
+
+/* void system_call(void);
+ * Inputs: void
+ * Return Value: none
+ * Function: raises system_call*/
 void system_call(){
     clear();
     printf(" System Call raised ");
