@@ -167,7 +167,40 @@ extern idt_desc_t idt[NUM_VEC];
 /* The descriptor used to load the IDTR */
 extern x86_desc_t idt_desc_ptr;
 
-/* Sets runtime parameters for an IDT entry */  //str = idt[6]
+//Struct defining each page directory entry
+typedef struct __attribute__ ((packed)) page_directory_entry_t{
+        uint32_t present : 1;
+        uint32_t read_write : 1;
+        uint32_t user_supervisor : 1;
+        uint32_t write_through : 1;
+        uint32_t cache_disable : 1;
+        uint32_t accessed : 1;
+        uint32_t dirty : 1;
+        uint32_t page_size : 1;
+        uint32_t global : 1;
+        uint32_t available : 3;
+        uint32_t page_table_base_addr : 20;
+}page_directory_entry_t;
+
+//Struct defining each page table entry
+typedef struct __attribute__ ((packed)) page_table_entry_t{
+        uint32_t present : 1;
+        uint32_t read_write : 1;
+        uint32_t user_supervisor : 1;
+        uint32_t write_through : 1;
+        uint32_t cache_disable : 1;
+        uint32_t accessed : 1;
+        uint32_t dirty : 1;
+        uint32_t page_attribute_table : 1;
+        uint32_t global : 1;
+        uint32_t available : 3;
+        uint32_t page_base_addr : 20;
+}page_table_entry_t;
+
+extern page_directory_entry_t pde[1024] __attribute__((aligned(4096)));
+extern page_table_entry_t pte[1024] __attribute__((aligned(4096)));
+
+/* Sets runtime parameters for an IDT entry */
 #define SET_IDT_ENTRY(str, handler)                              \
 do {                                                             \
     str.offset_31_16 = ((uint32_t)(handler) & 0xFFFF0000) >> 16; \
