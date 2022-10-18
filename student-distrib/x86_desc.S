@@ -12,6 +12,8 @@
 .globl gdt_ptr
 .globl idt_desc_ptr, idt
 
+.globl pde, pte
+
 .align 4
 
 
@@ -111,3 +113,21 @@ _idt:
     .endr
 
 idt_bottom:
+
+.align 4096 #align every 4 mb
+pde:
+_pde:
+    .rept 1024 #repeats long 0 for 1024 entries
+    .long 0
+    .endr
+
+pde_bottom:
+
+.align 4096 #align every 4 kb
+pte:
+_pte:
+    .rept 1024 #repeats long 0 for 1024 entries
+    .long 0
+    .endr
+
+pte_bottom:

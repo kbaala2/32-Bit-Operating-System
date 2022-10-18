@@ -7,122 +7,114 @@ extern void asm_link_rtc(void);
 
 void div_by_zero_exception(){
     clear();
-    printf("ddivide by zero exception raised");
+    printf(" divide by zero exception raised ");
     while(1);
 }
 void debug_exception(){
     clear();
-    printf("ddebug exception raised");
+    printf(" debug exception raised ");
     while(1);
 }
 void NMI_exception(){
     clear();
-    printf("nnon-maskable interrupt exception raised");
+    printf(" non-maskable interrupt exception raised ");
     while(1);
 }
 void breakpoint_exception(){
     clear();
-    printf("bbreakpoint exception raised");
+    printf(" breakpoint exception raised ");
     while(1);
 }
 void overflow_exception(){
     clear();
-    printf("ooverflow exception raised");
+    printf(" overflow exception raised ");
     while(1);
 }
 void bound_range_exceeded_exception(){
     clear();
-    printf("bbound range exceeded exception raised");
+    printf(" bound range exceeded exception raised ");
     while(1);
 }
 void invalid_opcode_exception(){
     clear();
-    printf("iinvalid opcode exception raised");
+    printf(" invalid opcode exception raised ");
     while(1);
 }
 void device_not_available_exception(){
     clear();
-    printf("ddevice not available exception raised");
+    printf(" device not available exception raised ");
     while(1);
 }
 void double_fault_exception(){
     clear();
-    printf("ddouble fault exception raised");
+    printf(" double fault exception raised ");
     while(1);
 }
 void coprocessor_segment_overrun(){
     clear();
-    printf("ccoprocessor segment overrun exception raised");
+    printf(" coprocessor segment overrun exception raised ");
     while(1);
 }
 void invalid_TSS_exception(){
     clear();
-    printf("iinvalid TSS exception raised");
+    printf(" invalid TSS exception raised ");
     while(1);
 }
 void segment_not_present_exception(){
     clear();
-    printf("ssegment not present exception raised");
+    printf(" segment not present exception raised ");
     while(1);
 }
 void stack_fault_exception(){
     clear();
-    printf("sstack fault exception raised");
+    printf(" stack fault exception raised ");
     while(1);
 }
 void general_protection_exception(){
     clear();
-    printf("ggeneral protection exception raised");
+    printf(" general protection exception raised ");
     while(1);
 }
 void page_fault_exception(){
     clear();
-    printf("ppage-fault exception raised");
+    printf(" page-fault exception raised ");
     while(1);
 }
 void x87_FPU_fp_error(){
     clear();
-    printf("xx87 FPU floating-point exception raised");
+    printf(" x87 FPU floating-point exception raised ");
     while(1);
 }
 void alignment_check_exception(){
     clear();
-    printf("aalignment check exception raised");
+    printf(" alignment check exception raised ");
     while(1);
 }
 void machine_check_exception(){
     clear();
-    printf("mmachine check exception raised");
+    printf(" machine check exception raised ");
     while(1);
 }
 void SIMD_fp_exception(){
     clear();
-    printf("SSIMD Floating-Point exception raised");
+    printf(" SIMD Floating-Point exception raised ");
     while(1);
 }
 void system_call(){
     clear();
-    printf("SSystem Call raised");
+    printf(" System Call raised ");
     while(1);
 }
-// void kb_interrupt(){
 
-// }
-// void rtc_interrupt(){
-
-// }
-// void asm_link_kb();
-// void asm_link_rtc();
-
-// idt_desc_t idt_init;
-// idt_init.present = 0x1;
-// idt_init.dpl = 0x0;
-// idt_init.size = 0x1;
+/* void initialize_idt(void);
+ * Inputs: void
+ * Return Value: none
+ * Function: Initialzies idt. Sets all the bits for idt to corresponding value */
 void initialize_idt(){
     int i;
     for(i = 0; i < NUM_VEC; i++){
-        if(i != 15){
-            idt[i].present = 0x1;
+        if(i != 15){ //15 is reserved by intel
+            idt[i].present = 0x1; 
         }
         else{
             idt[i].present = 0x0;

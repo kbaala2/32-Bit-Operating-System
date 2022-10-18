@@ -48,19 +48,27 @@ int idt_test(){
 
 int div_zero_test(){
 	TEST_HEADER;
+	int j;
 	int i = 1;
-	int j = i/0;
+	j = i/0;
 	return FAIL;
 }
 
-int out_of_bound(){
-	// TEST_HEADER;
-	// int n[5] = {0, 0, 0, 0, 0};
-	// int i;
-	// for(i = 0; i < 7; i++){
-	// 	printf("%d", )
-	// }
-	// return FAIL;
+int paging_test(){
+	TEST_HEADER;
+	int c;
+	unsigned int i = 3;
+	int* j = &i;
+	c = *j;
+	return PASS;
+}
+
+int paging_test_2(){
+	TEST_HEADER;
+	int i;
+	int* j = NULL;
+	i = *j;
+	return FAIL;
 }
 
 /* Checkpoint 2 tests */
@@ -72,8 +80,10 @@ int out_of_bound(){
 /* Test suite entry point */
 void launch_tests(){
 	TEST_OUTPUT("idt_test", idt_test());
+	//TEST_OUTPUT("page test", paging_test());
+	//TEST_OUTPUT("page test 2", paging_test_2());
+	//TEST_OUTPUT("div_zero_test", div_zero_test());
 	while(1);
 	// launch your tests here
-	//TEST_OUTPUT("div_zero_test", div_zero_test());
-	//TEST_OUTPUT("out_of_bound", out_of_bound());
+	
 }
