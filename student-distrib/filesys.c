@@ -14,7 +14,7 @@ int32_t file_init(boot_block_t *boot){
     inode_num = origin->inode_count;
     dentry_obj = &(origin->direntries[2]);
     data_num = origin->data_count;
-    first_data_block = inode_num * 4096; // inode_num * sizeof(inode_t)
+    first_data_block = origin + inode_num * 4096; // inode_num * sizeof(inode_t)
 
 }
 
@@ -47,7 +47,6 @@ int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t lengt
     data_block_t* data_ptr;
     uint32_t data_block_offset;
     int i = 0;
-    int temp_idx;
     int end;
     uint32_t data_block_idx = offset/4096;
     
