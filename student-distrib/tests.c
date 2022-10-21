@@ -1,6 +1,8 @@
 #include "tests.h"
 #include "x86_desc.h"
 #include "lib.h"
+#include "terminal.h"
+#include "keyboard.h"
 
 #define PASS 1
 #define FAIL 0
@@ -71,6 +73,21 @@ int paging_test_2(){
 	return FAIL;
 }
 
+int test_terminal(){
+	TEST_HEADER;
+	int nbytes;
+	char buf[1024];
+    while(1){
+		//terminal_write(0, (char*)"TESTING size 10\n", 16);
+		nbytes = terminal_read(0, buf, 128);
+        terminal_write(0, buf, nbytes);
+    }
+	// return FAIL;
+	// char* buf = "test buffer";
+	// terminal_write(1, buf, 11);
+	return FAIL;
+}
+
 /* Checkpoint 2 tests */
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
@@ -83,6 +100,7 @@ void launch_tests(){
 	//TEST_OUTPUT("page test", paging_test());
 	//TEST_OUTPUT("page test 2", paging_test_2());
 	//TEST_OUTPUT("div_zero_test", div_zero_test());
+	TEST_OUTPUT("term", test_terminal());
 	while(1);
 	// launch your tests here
 	
