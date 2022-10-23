@@ -71,6 +71,31 @@ int paging_test_2(){
 	return FAIL;
 }
 
+int cat_test(uint8_t* filename) {
+	uint8_t i, filename, nbytes;
+	char buf[100];
+
+	nbytes = 100;
+
+	if(open_f(filename) == -1){
+		printf("bad filename");
+		return FAIL;
+	}
+
+	for(i = 0; i < nbytes; i++){
+		while(read_f(filename,buf,nbytes)) {
+			printf("%c", buf[i]);
+		}
+	}
+
+	close_f(filename);
+	 
+	return PASS;
+
+
+
+}
+
 /* Checkpoint 2 tests */
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */

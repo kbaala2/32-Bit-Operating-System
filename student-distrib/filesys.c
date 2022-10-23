@@ -14,7 +14,7 @@ int32_t file_init(boot_block_t *boot){
     inode_num = origin->inode_count;
     dentry_obj = &(origin->direntries[2]);
     data_num = origin->data_count;
-    first_data_block = origin + inode_num * 4096; // inode_num * sizeof(inode_t)
+    first_data_block = origin + inode_count * 4096; // inode_num * sizeof(inode_t)
 
 }
 
@@ -29,7 +29,7 @@ int32_t read_dentry_by_name (const uint8_t* fname, dentry_t* dentry){
         }
     }
 
-    return -1;
+    return 0;
 }
 int32_t read_dentry_by_index (uint32_t index, dentry_t* dentry){
     if(index > ENTRY_NUM || index < 0) return -1;
@@ -63,7 +63,7 @@ int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t lengt
     end = length; //end of length
 
     for(i = 0; i < end; i++){
-        if(i == 4096){ //4096 is the last index of the current data block
+        if(i == 4096){ //4096 is the start index of the next data block
             data_block_idx++; //go to next datablock
             data_block_offset = 0;
         }
@@ -75,6 +75,7 @@ int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t lengt
 }
 
 int32_t open_f(const uint8_t* filename){
+    if(filename == NULL) return -1;
     return read_dentry_by_name(filename, dentry_obj);
 }
 
@@ -91,6 +92,7 @@ int close_f(int32_t fd){
 
 int read_f(int32_t fd, void *buf, int32_t nbytes){
     //TODO: read data
+    if(buf == NULL) return -1;
     return read_data(fd,0, buf, nbytes);
 }
 
