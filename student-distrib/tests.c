@@ -97,6 +97,23 @@ int cat_test(uint8_t* filename) {
 }
 
 /* Checkpoint 2 tests */
+
+
+
+int cat_test(uint8_t* filename){
+	uint8_t i, nbytes;
+	char buf[100];
+	nbytes = 100;
+
+	if(open_f(filename) == -1){
+		printf("invalid filename");
+		return FAIL;
+	}
+	
+	// for(i = 0; i < nbytes; i++){
+
+	// }
+}
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
 /* Checkpoint 5 tests */

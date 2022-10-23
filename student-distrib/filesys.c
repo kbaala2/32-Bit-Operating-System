@@ -10,17 +10,21 @@ uint32_t data_num;
 
 int32_t file_init(boot_block_t *boot){
     origin = boot;
-    root_inode = (inode_t*)(origin + 1);
+    root_inode = (origin + 1);
     inode_num = origin->inode_count;
     dentry_obj = &(origin->direntries[2]);
     data_num = origin->data_count;
+<<<<<<< HEAD
     first_data_block = origin + inode_count * 4096; // inode_num * sizeof(inode_t)
 
+=======
+    first_data_block = origin + inode_num * 4096; // inode_num * sizeof(inode_t)
+    return 0;
+>>>>>>> 9071d13b53023bc1043e29ca8be23c5595923ba9
 }
 
-int32_t read_dentry_by_name (const uint8_t* fname, dentry_t* dentry){
-    int idx = 0; //file index
 
+<<<<<<< HEAD
     if(strlen(fname) > FILENAME_LEN) return -1;
 
     for(idx = 0; idx < ENTRY_NUM; idx++){
@@ -31,6 +35,8 @@ int32_t read_dentry_by_name (const uint8_t* fname, dentry_t* dentry){
 
     return 0;
 }
+=======
+>>>>>>> 9071d13b53023bc1043e29ca8be23c5595923ba9
 int32_t read_dentry_by_index (uint32_t index, dentry_t* dentry){
     if(index > ENTRY_NUM || index < 0) return -1;
     memcpy(dentry->filename, origin->direntries[index].filename, sizeof(dentry->filename));
@@ -40,11 +46,25 @@ int32_t read_dentry_by_index (uint32_t index, dentry_t* dentry){
     return 0;
 }
 
+int32_t read_dentry_by_name (const uint8_t* fname, dentry_t* dentry){
+    int idx = 0; //file index
+
+    if(strlen((int8_t*)fname) > FILENAME_LEN || fname == NULL) return -1;
+
+    for(idx = 0; idx < ENTRY_NUM; idx++){
+        if(strncmp((int8_t*)origin->direntries[idx].filename,(int8_t*)fname, sizeof(fname))){
+            return read_dentry_by_index(idx, dentry);
+        }
+    }
+
+    return -1;
+}
+
 int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length){
     inode_t* inode_ptr;
     uint8_t datab_num;
     data_block_t* data_block;
-    data_block_t* data_ptr;
+   // data_block_t* data_ptr;
     uint32_t data_block_offset;
     int i = 0;
     int end;
@@ -67,7 +87,7 @@ int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t lengt
             data_block_idx++; //go to next datablock
             data_block_offset = 0;
         }
-        memcpy(buf[i], data_block->data_block_array[i + data_block_offset], sizeof(data_block->data_block_array[i + data_block_offset]));
+        memcpy(buf + i, data_block->data_block_array[i + data_block_offset], sizeof(data_block->data_block_array[i + data_block_offset]));
     }
 
     return 0;
@@ -75,7 +95,11 @@ int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t lengt
 }
 
 int32_t open_f(const uint8_t* filename){
+<<<<<<< HEAD
     if(filename == NULL) return -1;
+=======
+    if(filename == NULL) return 0;
+>>>>>>> 9071d13b53023bc1043e29ca8be23c5595923ba9
     return read_dentry_by_name(filename, dentry_obj);
 }
 
@@ -84,9 +108,9 @@ int write_f(int32_t fd, const void *buf, int32_t nbytes){
 }
 
 int close_f(int32_t fd){
-    dentry_obj->filename = NULL;
-    dentry_obj->filetype = NULL;
-    dentry_obj->inode_num = NULL;
+    // dentry_obj->filename = NULL;
+    // dentry_obj->filetype = NULL;
+    // dentry_obj->inode_num = NULL;
     return 0;
 }
 
@@ -97,6 +121,7 @@ int read_f(int32_t fd, void *buf, int32_t nbytes){
 }
 
 int32_t open_d(const uint8_t* filename){
+    if(filename == NULL) return 0;
     read_dentry_by_name(filename, dentry_obj);
     if(dentry_obj->filetype ==1){
         return 0;
@@ -108,11 +133,12 @@ int write_d(int32_t fd, const void *buf, int32_t nbytes){
     return -1;
 }
 
-int close_f(int32_t fd){
+int close_d(int32_t fd){
     return 0;
 }
 
 int read_d(int32_t fd, void *buf, int32_t nbytes){
+    if(buf == NULL) return -1;
     int read_idx = 0;
     read_dentry_by_index(read_idx, dentry_obj);
     memcpy(buf, dentry_obj->filename, sizeof(dentry_obj->filename));
