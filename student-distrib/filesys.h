@@ -8,18 +8,18 @@
 #define RESERVED_BOOT 52
 
 typedef struct boot_block{
-    int32_t dir_count;
-    int32_t inode_count;
-    int32_t data_count;
+    uint32_t dir_count;
+    uint32_t inode_count;
+    uint32_t data_count;
     uint8_t reserved[RESERVED_BOOT];
     dentry_t direntries[ENTRY_NUM];
 }boot_block_t;
 
 typedef struct dentry{
-    int8_t filename[FILENAME_LEN];
-    int32_t filetype;
-    int32_t inode_num;
-    int8_t reserved[RESERVED_LEN];
+    uint8_t filename[FILENAME_LEN];
+    uint32_t filetype;
+    uint32_t inode_num;
+    uint8_t reserved[RESERVED_LEN];
 }dentry_t;
 
 typedef struct inode{
@@ -28,7 +28,7 @@ typedef struct inode{
 }inode_t;
 
 typedef struct data_block{
-    uint32_t data_block_array*;
+    uint8_t* data_block_array;
 }data_block_t;
 
 extern int32_t file_init(boot_block_t *boot);

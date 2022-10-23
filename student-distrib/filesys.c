@@ -12,9 +12,9 @@ int32_t file_init(boot_block_t *boot){
     origin = boot;
     root_inode = (inode_t*)(origin + 1);
     inode_num = origin->inode_count;
-    dentry_obj = (dentry_t*)(origin.direntries[2]);
-    data_num = origin->data_num;
-    first_data_block = inode_num * 4096; // inode_num * sizeof(inode_t)
+    dentry_obj = &(origin->direntries[2]);
+    data_num = origin->data_count;
+    first_data_block = origin + inode_num * 4096; // inode_num * sizeof(inode_t)
 
 }
 
@@ -23,8 +23,8 @@ int32_t read_dentry_by_name (const uint8_t* fname, dentry_t* dentry){
 
     if(strlen(fname) > FILENAME_LEN) return -1;
 
-    for(idx = 0; i < ENTRY_NUM; i++){
-        if(strncmp(origin->direntries[i].filename,fname)){
+    for(idx = 0; idx < ENTRY_NUM; idx++){
+        if(strncmp(origin->direntries[idx].filename,fname, sizeof(fname))){
             return read_dentry_by_index(idx, dentry);
         }
     }
@@ -33,21 +33,21 @@ int32_t read_dentry_by_name (const uint8_t* fname, dentry_t* dentry){
 }
 int32_t read_dentry_by_index (uint32_t index, dentry_t* dentry){
     if(index > ENTRY_NUM || index < 0) return -1;
-    memcpy(dentry->filename, origin->direntries[idx].filename, sizeof(dentry->filename));
+    memcpy(dentry->filename, origin->direntries[index].filename, sizeof(dentry->filename));
     // dentry.filename = origin->direntries[idx].filename;
-    dentry->filetype = origin->direntries[idx].filetype;
-    dentry->inode_num = origin->direntries[idx].inode_num;
+    dentry->filetype = origin->direntries[index].filetype;
+    dentry->inode_num = origin->direntries[index].inode_num;
     return 0;
 }
 
 int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length){
     inode_t* inode_ptr;
-    data_block_t* datab_num;
+    uint8_t datab_num;
     data_block_t* data_block;
+    data_block_t* data_ptr;
     uint32_t data_block_offset;
     int i = 0;
-    int temp_idx;
-    uint8_t* copy_buf;
+    int end;
     uint32_t data_block_idx = offset/4096;
     
     if(inode >= inode_num || data_block_idx >= DATA_NUMBER) return -1;
@@ -58,13 +58,19 @@ int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t lengt
 
     data_block = first_data_block + datab_num; // access the data block we want
 
-    for(i = data_block_offset; i < length + data_block_offset; i++){
+    //data_ptr  = data_block->data_block_array;
+
+    end = length; //end of length
+
+    for(i = 0; i < end; i++){
         if(i == 4096){ //4096 is the last index of the current data block
-            
-        }    
+            data_block_idx++; //go to next datablock
+            data_block_offset = 0;
+        }
+        memcpy(buf[i], data_block->data_block_array[i + data_block_offset], sizeof(data_block->data_block_array[i + data_block_offset]));
     }
 
-
+    return 0;
 
 }
 
@@ -85,6 +91,7 @@ int close_f(int32_t fd){
 
 int read_f(int32_t fd, void *buf, int32_t nbytes){
     //TODO: read data
+    return read_data(fd,0, buf, nbytes);
 }
 
 int32_t open_d(const uint8_t* filename){
