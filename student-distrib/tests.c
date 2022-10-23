@@ -106,7 +106,10 @@ int test_rtc() {
 		}
 		printf("\n");
 	}
-	return PASS;
+	if(returnVal == 0){
+		return PASS;
+	}
+	return FAIL;
 }
 
 /* Checkpoint 2 tests */
