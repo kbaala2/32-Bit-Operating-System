@@ -122,7 +122,7 @@ void launch_tests(){
 	//TEST_OUTPUT("page test 2", paging_test_2());
 	//TEST_OUTPUT("div_zero_test", div_zero_test());
 	TEST_OUTPUT("term", test_terminal());
-	TEST_OUTPUT("rtc", test_rtc());
+	//TEST_OUTPUT("rtc", test_rtc());
 	while(1);
 	// launch your tests here
 	

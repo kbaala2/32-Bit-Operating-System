@@ -76,7 +76,7 @@ int rtc_write(int32_t fd, const void *buf, int32_t nbytes){
     int freq = result[0];
 
     
-    if(freq == NULL || (freq & (freq - 1) != 0)){
+    if(freq == NULL || ((freq & (freq - 1)) != 0)){
         return -1;
     }
 
