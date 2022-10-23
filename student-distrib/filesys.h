@@ -1,35 +1,39 @@
 #ifndef FILESYS_H
 #define FILESYS_H
 
+#include "types.h"
+
 #define FILENAME_LEN 32
 #define ENTRY_NUM 63
 #define DATA_NUMBER 1023
 #define RESERVED_LEN 24
 #define RESERVED_BOOT 52
 
-typedef struct boot_block{
+
+typedef struct __attribute__ ((packed)) dentry {
+    uint8_t filename[FILENAME_LEN];
+    uint32_t filetype;
+    uint32_t inode_num;
+    uint8_t reserved[RESERVED_LEN];
+} dentry_t;
+
+typedef struct __attribute__ ((packed)) boot_block {
     uint32_t dir_count;
     uint32_t inode_count;
     uint32_t data_count;
     uint8_t reserved[RESERVED_BOOT];
     dentry_t direntries[ENTRY_NUM];
-}boot_block_t;
+} boot_block_t;
 
-typedef struct dentry{
-    uint8_t filename[FILENAME_LEN];
-    uint32_t filetype;
-    uint32_t inode_num;
-    uint8_t reserved[RESERVED_LEN];
-}dentry_t;
 
-typedef struct inode{
+typedef struct __attribute__ ((packed)) inode {
     uint32_t length;
     uint32_t data_block_num[DATA_NUMBER];
-}inode_t;
+} inode_t;
 
-typedef struct data_block{
+typedef struct __attribute__ ((packed)) data_block {
     uint8_t* data_block_array;
-}data_block_t;
+} data_block_t;
 
 extern int32_t file_init(boot_block_t *boot);
 extern int32_t read_dentry_by_name (const uint8_t* fname, dentry_t* dentry);

@@ -16,7 +16,7 @@ volatile int BLOCK_FLAG = 0; //flag to tell read to block until next interrupt
 void rtc_init(void) {
     /* sets the registers for the rtc */ 
     outb(0x0B, 0x70); //Select register B
-    char prev = inb(0x71); //read valye at register B
+    char prev = inb(0x71); //read value at register B
     outb(0x0B, 0x70); //set the index again
     outb(prev | 0x40, 0x71);  //turn on bit 6 of reigster B
     enable_irq(8); //RTC at irq 8
@@ -71,7 +71,8 @@ int rtc_write(int32_t fd, const void *buf, int32_t nbytes){
     int rate;
     int new_rate;
     int max_freq = 32768;
-    int freq = buf[0];
+    int* x = (int*)buf;
+    int freq = x[0];
 
     
     if(freq == NULL || (freq & (freq - 1) != 0)){
