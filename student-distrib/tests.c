@@ -3,6 +3,7 @@
 #include "lib.h"
 #include "terminal.h"
 #include "keyboard.h"
+#include "rtc.h"
 
 #define PASS 1
 #define FAIL 0
@@ -88,6 +89,26 @@ int test_terminal(){
 	return FAIL;
 }
 
+int test_rtc() {
+	TEST_HEADER;
+	uint32_t i;
+	uint32_t j;
+	int32_t returnVal = 0;
+	returnVal += rtc_open(NULL);
+	for(i = 2; i <= 1024; i *= 2){
+		clear();
+		clear_pos();
+		returnVal += rtc_write(NULL, &i, sizeof(uint32_t));
+		printf("%d Hz Test:\n", i);
+		for(j = 0; j < i; j++){
+			returnVal += rtc_read(NULL, NULL, NULL);
+			printf("1");
+		}
+		printf("\n");
+	}
+	return PASS;
+}
+
 /* Checkpoint 2 tests */
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
@@ -101,6 +122,7 @@ void launch_tests(){
 	//TEST_OUTPUT("page test 2", paging_test_2());
 	//TEST_OUTPUT("div_zero_test", div_zero_test());
 	TEST_OUTPUT("term", test_terminal());
+	TEST_OUTPUT("rtc", test_rtc());
 	while(1);
 	// launch your tests here
 	

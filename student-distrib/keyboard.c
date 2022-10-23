@@ -151,49 +151,181 @@ void keyboard_handler(void){
             else{
                 if(shift_flag ^ caps_flag){
                     switch((int)key_map[scan_code]){
-                        case 96: shifted_char = 126;
+                        case 96:
+                            if(caps_flag){
+                                shifted_char = 96;
+                            }
+                            else{
+                                shifted_char = 126;
+                            }
                             break;
-                        case 49: shifted_char = 33;
+                        case 49:
+                            if(caps_flag){
+                                shifted_char = 49;
+                            }
+                            else{
+                                shifted_char = 33;
+                            }
                             break;
-                        case 50: shifted_char = 64;
+                        case 50:
+                            if(caps_flag){
+                                shifted_char = 50;
+                            }
+                            else{
+                                shifted_char = 64;
+                            }
                             break;
-                        case 51: shifted_char = 35;
+                        case 51:
+                            if(caps_flag){
+                                shifted_char = 51;
+                            }
+                            else{
+                                shifted_char = 35;
+                            }
                             break;
-                        case 52: shifted_char = 36;
+                        case 52:
+                            if(caps_flag){
+                                shifted_char = 52;
+                            }
+                            else{
+                                shifted_char = 36;
+                            }
                             break;
-                        case 53: shifted_char = 37;
+                        case 53:
+                            if(caps_flag){
+                                shifted_char = 53;
+                            }
+                            else{
+                                shifted_char = 37;
+                            }
                             break;
-                        case 54: shifted_char = 94;
+                        case 54:
+                            if(caps_flag){
+                                shifted_char = 54;
+                            }
+                            else{
+                                shifted_char = 94;
+                            }
                             break;
-                        case 55: shifted_char = 38;
+                        case 55:
+                            if(caps_flag){
+                                shifted_char = 55;
+                            }
+                            else{
+                                shifted_char = 38;
+                            }
                             break;
-                        case 56: shifted_char = 42;
+                        case 56:
+                            if(caps_flag){
+                                shifted_char = 56;
+                            }
+                            else{
+                                shifted_char = 42;
+                            }
                             break;
-                        case 57: shifted_char = 40;
+                        case 57:
+                            if(caps_flag){
+                                shifted_char = 57;
+                            }
+                            else{
+                                shifted_char = 40;
+                            }
                             break;
-                        case 48: shifted_char = 41;
+                        case 48:
+                            if(caps_flag){
+                                shifted_char = 48;
+                            }
+                            else{
+                                shifted_char = 41;
+                            }
                             break;
-                        case 45: shifted_char = 95;
+                        case 45:
+                            if(caps_flag){
+                                shifted_char = 45;
+                            }
+                            else{
+                                shifted_char = 95;
+                            }
                             break;
-                        case 61: shifted_char = 43;
+                        case 61:
+                            if(caps_flag){
+                                shifted_char = 61;
+                            }
+                            else{
+                                shifted_char = 43;
+                            }
                             break;
-                        case 91: shifted_char = 123;
+                        case 91:
+                            if(caps_flag){
+                                shifted_char = 91;
+                            }
+                            else{
+                                shifted_char = 123;
+                            }
                             break;
-                        case 93: shifted_char = 125;
+                        case 93:
+                            if(caps_flag){
+                                shifted_char = 93;
+                            }
+                            else{
+                                shifted_char = 125;
+                            }
                             break;
-                        case 92: shifted_char = 124;
+                        case 92:
+                            if(caps_flag){
+                                shifted_char = 92;
+                            }
+                            else{
+                                shifted_char = 124;
+                            }
                             break;
-                        case 59: shifted_char = 58;
+                        case 59:
+                            if(caps_flag){
+                                shifted_char = 59;
+                            }
+                            else{
+                                shifted_char = 58;
+                            }
                             break;
-                        case 39: shifted_char = 34;
+                        case 39:
+                            if(caps_flag){
+                                shifted_char = 39;
+                            }
+                            else{
+                                shifted_char = 34;
+                            }
                             break;
-                        case 44: shifted_char = 60;
+                        case 44:
+                            if(caps_flag){
+                                shifted_char = 44;
+                            }
+                            else{
+                                shifted_char = 60;
+                            }
                             break;
-                        case 46: shifted_char = 62;
+                        case 46:
+                            if(caps_flag){
+                                shifted_char = 46;
+                            }
+                            else{
+                                shifted_char = 62;
+                            }
                             break;
-                        case 47: shifted_char = 63;
+                        case 47:
+                            if(caps_flag){
+                                shifted_char = 47;
+                            }
+                            else{
+                                shifted_char = 63;
+                            }
                             break;
-                        case 10: shifted_char = 10;
+                        case 10:
+                            if(caps_flag){
+                                shifted_char = 10;
+                            }
+                            else{
+                                shifted_char = 10;
+                            }
                             break;
                         default: shifted_char = (key_map[scan_code] - 32);
                             break;

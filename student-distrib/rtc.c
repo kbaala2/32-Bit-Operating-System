@@ -1,6 +1,7 @@
-#include "rtc.h"
+
 #include "lib.h"
 #include "i8259.h"
+#include "rtc.h"
 
 //FLAGS
 volatile int BLOCK_FLAG = 0; //flag to tell read to block until next interrupt
@@ -71,7 +72,8 @@ int rtc_write(int32_t fd, const void *buf, int32_t nbytes){
     int rate;
     int new_rate;
     int max_freq = 32768;
-    int freq = buf[0];
+    int* result = (int*)buf;
+    int freq = result[0];
 
     
     if(freq == NULL || (freq & (freq - 1) != 0)){
@@ -85,7 +87,7 @@ int rtc_write(int32_t fd, const void *buf, int32_t nbytes){
             break;
         }
     }
-    if(new_rate > 6){
+    if(new_rate < 6){
         new_rate = 6;
     }
 
@@ -95,4 +97,9 @@ int rtc_write(int32_t fd, const void *buf, int32_t nbytes){
     outb((prev & 0xF0) | new_rate, 0x71); //write only our rate to A. Note, rate is 0x0F, which sets rate to freq
 
     return nbytes;
+}
+
+
+int rtc_close(int32_t fd){
+    return 0;
 }
