@@ -8,7 +8,9 @@ idt.o: idt.c idt.h x86_desc.h types.h lib.h
 kernel.o: kernel.c multiboot.h types.h x86_desc.h lib.h i8259.h debug.h \
   tests.h idt.h keyboard.h filesys.h
 keyboard.o: keyboard.c keyboard.h lib.h types.h i8259.h
-lib.o: lib.c lib.h types.h
+lib.o: lib.c lib.h types.h keyboard.h
 paging.o: paging.c paging.h x86_desc.h types.h lib.h
-rtc.o: rtc.c rtc.h types.h lib.h i8259.h
-tests.o: tests.c tests.h x86_desc.h types.h lib.h filesys.h
+rtc.o: rtc.c lib.h types.h i8259.h rtc.h
+terminal.o: terminal.c keyboard.h lib.h types.h terminal.h
+tests.o: tests.c tests.h x86_desc.h types.h lib.h terminal.h keyboard.h \
+  rtc.h filesys.h

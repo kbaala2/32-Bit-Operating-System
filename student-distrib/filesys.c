@@ -162,12 +162,54 @@ int read_d(int32_t fd, void *buf, int32_t nbytes){
     //printf("%u",dentry_obj->filetype);
     for(i =0; i < 32; i++){
         if(origin->direntries[fd].filename[i] == NULL){
-            continue;
+            nbytes = i;
+            break;
         }
         //printf("%c", origin->direntries[fd].filename[i]);
     }
     //printf("\n");
     //read_dentry_by_index(fd, &(origin->direntries[fd]));
     memcpy(buf, origin->direntries[fd].filename, sizeof(origin->direntries[fd].filename));
-    return 0;
+    return nbytes;
 }
+
+
+// int32_t clear_dentry (const uint8_t* fname, dentry_t* dentry){
+//     int idx = 0; //file index
+//     int i;
+
+//     if(strlen((int8_t*)fname) > FILENAME_LEN || fname == NULL) return -1;
+
+//     for(idx = 0; idx < ENTRY_NUM; idx++){
+//         if(strncmp((int8_t*)origin->direntries[idx].filename,(int8_t*)fname, sizeof(fname)) == 0){
+//             // for(i =0; i < 63; i++){
+//             //     if(origin->direntries[idx].filename[i] == NULL){
+//             //         break;
+//             //     }
+//             //     printf("%c", origin->direntries[idx].filename[i]);
+//             // }
+//             // for(i =0; i < 63; i++){
+//             //     if(fname[i] == NULL){
+//             //         break;
+//             //     }
+//             //     printf("%c", fname[i]);
+//             // }
+//             //read_dentry_by_index(idx, dentry);
+//             //printf("%u",origin->direntries[idx].filetype);
+//             memcpy(dentry->filename, "\0", sizeof(dentry->filename));
+//             // dentry.filename = origin->direntries[idx].filename;
+//             dentry->filetype = NULL;
+//             dentry->inode_num = NULL;
+//             //printf("%u",dentry->filetype);
+//             // for(i =0; i < 63; i++){
+//             //     if(dentry->filename[i] == NULL){
+//             //         break;
+//             //     }
+//             //     printf("%c", dentry->filename[i]);
+//             // }
+//             return 0;
+//         }
+//     }
+    
+//     return -1;
+// }

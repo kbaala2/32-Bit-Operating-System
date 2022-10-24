@@ -1,13 +1,10 @@
 #include "tests.h"
 #include "x86_desc.h"
 #include "lib.h"
-<<<<<<< HEAD
-#include "filesys.h"
-=======
 #include "terminal.h"
 #include "keyboard.h"
 #include "rtc.h"
->>>>>>> origin/dinal2g
+#include "filesys.h"
 
 #define PASS 1
 #define FAIL 0
@@ -143,6 +140,7 @@ int cat_test(uint8_t* filename){
 		return FAIL;
 	}
 	clear();
+	clear_pos();
 	for(i = 0; i < 187; i++){
 		putc(buf[i]);
 	}
@@ -153,18 +151,21 @@ int list_dir(){
 	TEST_HEADER;
 	char buf[1000];
 	int i;
-	int j;
 	int ret;
 	clear();
-	for(i = 0; i < 63; i++){
+	clear_pos();
+	for(i = 0; i < 62; i++){
 		ret = read_d(i, buf, 32);
+		if(ret == 0) break;
 		if(ret == -1) return FAIL;
 		printf(buf);
+		printf("\n");
+		//printf("\n");
 	}
 	// ret = read_d(0, buf, 32);
 	// if(ret == -1) return FAIL;
 	// printf(buf[0]);
-	// return PASS;
+	return PASS;
 }
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
@@ -179,7 +180,7 @@ void launch_tests(){
 	//TEST_OUTPUT("div_zero_test", div_zero_test());
 	//TEST_OUTPUT("file system cat test", cat_test("frame0.txt"));
 	TEST_OUTPUT("list dir test", list_dir());
-	TEST_OUTPUT("term", test_terminal());
+	//TEST_OUTPUT("term", test_terminal());
 	//TEST_OUTPUT("rtc", test_rtc());
 	while(1);
 	// launch your tests here
