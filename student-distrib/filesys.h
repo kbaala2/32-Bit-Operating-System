@@ -32,7 +32,7 @@ typedef struct __attribute__ ((packed)) inode {
 } inode_t;
 
 typedef struct __attribute__ ((packed)) data_block {
-    uint8_t* data_block_array;
+    uint8_t data[4096];
 } data_block_t;
 
 extern int32_t file_init(boot_block_t *boot);

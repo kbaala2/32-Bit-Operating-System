@@ -1,6 +1,7 @@
 #include "tests.h"
 #include "x86_desc.h"
 #include "lib.h"
+#include "filesys.h"
 
 #define PASS 1
 #define FAIL 0
@@ -76,18 +77,50 @@ int paging_test_2(){
 
 
 int cat_test(uint8_t* filename){
-	uint8_t i, nbytes;
-	char buf[100];
-	nbytes = 100;
-
+	TEST_HEADER;
+	int i;
+	dentry_t dentry;
+	char buf[1000];
 	if(open_f(filename) == -1){
 		printf("invalid filename");
 		return FAIL;
 	}
-	
-	// for(i = 0; i < nbytes; i++){
+	if(read_dentry_by_name(filename, &dentry) == -1){
+		return FAIL;
+	}
+	// for(i =0; i < 63; i++){
+    //     if(dentry.filename[i] == NULL){
+    //         break;
+    //     }
+    //     printf("%c", dentry.filename[i]);
+    // }
+	//printf("%u, %u",dentry.inode_num, dentry.inode_num*4096);
+	if(read_data(dentry.inode_num, 0 , buf, 187) == -1) {
+		return FAIL;
+	}
+	clear();
+	for(i = 0; i < 187; i++){
+		putc(buf[i]);
+	}
+	return PASS;	
+}
 
-	// }
+int list_dir(){
+	TEST_HEADER;
+	char buf[1000];
+	int i;
+	int j;
+	int ret;
+	clear();
+	for(i = 0; i < 63; i++){
+		ret = read_d(i, buf, 32);
+		if(ret == -1) return FAIL;
+		printf(buf);
+	}
+	// ret = read_d(0, buf, 32);
+	// if(ret == -1) return FAIL;
+	// printf(buf[0]);
+	// return PASS;
 }
 /* Checkpoint 3 tests */
 /* Checkpoint 4 tests */
@@ -96,10 +129,12 @@ int cat_test(uint8_t* filename){
 
 /* Test suite entry point */
 void launch_tests(){
-	TEST_OUTPUT("idt_test", idt_test());
+	//TEST_OUTPUT("idt_test", idt_test());
 	//TEST_OUTPUT("page test", paging_test());
 	//TEST_OUTPUT("page test 2", paging_test_2());
 	//TEST_OUTPUT("div_zero_test", div_zero_test());
+	//TEST_OUTPUT("file system cat test", cat_test("frame0.txt"));
+	TEST_OUTPUT("list dir test", list_dir());
 	while(1);
 	// launch your tests here
 	
