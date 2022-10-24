@@ -2,6 +2,7 @@
  * vim:ts=4 noexpandtab */
 
 #include "lib.h"
+#include "keyboard.h"
 
 #define VIDEO       0xB8000
 #define NUM_COLS    80
@@ -168,16 +169,53 @@ int32_t puts(int8_t* s) {
  * Return Value: void
  *  Function: Output a character to the console */
 void putc(uint8_t c) {
+    if(screen_x == 79){
+        screen_y++;
+        screen_x = 0;
+    }
     if(c == '\n' || c == '\r') {
         screen_y++;
         screen_x = 0;
-    } else {
+    } 
+    else if(c == '\b'){
+        if(tab_flag) {
+            screen_x -= 4;
+            tab_flag = 0;
+        }
+        else if(screen_x == 0 && screen_y != 0){
+            screen_y--;
+            screen_x = 78;
+        }
+        else if(screen_x == 0 && screen_y == 0){}
+        else{
+            screen_x--;
+        }
+        *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = ' ';
+        *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = 0x3;
+        screen_x %= NUM_COLS;
+        screen_y = (screen_y + (screen_x / NUM_COLS)) % NUM_ROWS;
+    }
+    else if(c == '\t'){
+        if(screen_x < 76){
+            screen_x += 4;
+        }
+        else{
+            screen_y++;
+            screen_x = 0;
+        }
+    }
+    else {
         *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = c;
-        *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = ATTRIB;
+        *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = 0x3;
         screen_x++;
         screen_x %= NUM_COLS;
         screen_y = (screen_y + (screen_x / NUM_COLS)) % NUM_ROWS;
     }
+}
+
+void clear_pos(){
+    screen_x = 0;
+    screen_y = 0;
 }
 
 /* int8_t* itoa(uint32_t value, int8_t* buf, int32_t radix);

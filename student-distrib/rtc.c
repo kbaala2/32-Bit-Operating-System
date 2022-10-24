@@ -1,6 +1,7 @@
-#include "rtc.h"
+
 #include "lib.h"
 #include "i8259.h"
+#include "rtc.h"
 
 //FLAGS
 volatile int BLOCK_FLAG = 0; //flag to tell read to block until next interrupt
@@ -52,12 +53,12 @@ int rtc_open(int32_t fd){
     return 0;
 }
 
-
-// unsigned int Log2n(unsigned int n)
-// {
-//     return (n > 1) ? 1 + Log2n(n / 2) : 0;
-// }
-
+/* void rtc_read(int32_t fd, void *buf, int32_t nbytes);
+ * Inputs: int32_t fd - file data
+           void *buf - buffer that hold frequency
+           int32_t nbytes - 
+ * Return Value: none
+ * Function: blocks until next interrupt*/
 int rtc_read(int32_t fd, void *buf, int32_t nbytes){
     while(!BLOCK_FLAG);
     BLOCK_FLAG = 0;
@@ -71,22 +72,22 @@ int rtc_write(int32_t fd, const void *buf, int32_t nbytes){
     int rate;
     int new_rate;
     int max_freq = 32768;
-    int* x = (int*)buf;
-    int freq = x[0];
+    int* result = (int*)buf;
+    int freq = result[0];
 
     
-    if(freq == NULL || (freq & (freq - 1) != 0)){
+    if(freq == NULL || ((freq & (freq - 1)) != 0)){
         return -1;
     }
 
-    for(rate = 3; rate  < 17; rate++){
+    for(rate = 3; rate < 17; rate++){
         target = max_freq >> (rate - 1);
         if(target == freq){
             new_rate = rate - 1;
             break;
         }
     }
-    if(new_rate > 6){
+    if(new_rate < 6){
         new_rate = 6;
     }
 
@@ -95,5 +96,13 @@ int rtc_write(int32_t fd, const void *buf, int32_t nbytes){
     outb(0x8A, 0x70);		// reset index to A
     outb((prev & 0xF0) | new_rate, 0x71); //write only our rate to A. Note, rate is 0x0F, which sets rate to freq
 
-    return nbytes;
+    return 0;
+}
+
+/* void rtc_cclose(int32_t fd);
+ * Inputs: int32_t fd - file data
+ * Return Value: none
+ * Function: does nothing*/
+int rtc_close(int32_t fd){
+    return 0;
 }
