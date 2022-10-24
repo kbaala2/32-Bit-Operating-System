@@ -121,7 +121,9 @@ int cat_test(uint8_t* filename){
 	TEST_HEADER;
 	int i;
 	dentry_t dentry;
-	char buf[1000];
+	char buf[10000];
+	clear();
+	clear_pos();
 	if(open_f(filename) == -1){
 		printf("invalid filename");
 		return FAIL;
@@ -129,19 +131,12 @@ int cat_test(uint8_t* filename){
 	if(read_dentry_by_name(filename, &dentry) == -1){
 		return FAIL;
 	}
-	// for(i =0; i < 63; i++){
-    //     if(dentry.filename[i] == NULL){
-    //         break;
-    //     }
-    //     printf("%c", dentry.filename[i]);
-    // }
-	//printf("%u, %u",dentry.inode_num, dentry.inode_num*4096);
-	if(read_data(dentry.inode_num, 0 , buf, 187) == -1) {
+	if(read_data(dentry.inode_num, 0 , buf, 20) == -1) {
 		return FAIL;
 	}
 	clear();
 	clear_pos();
-	for(i = 0; i < 187; i++){
+	for(i = 0; i < 20; i++){
 		putc(buf[i]);
 	}
 	return PASS;	
@@ -160,11 +155,7 @@ int list_dir(){
 		if(ret == -1) return FAIL;
 		printf(buf);
 		printf("\n");
-		//printf("\n");
 	}
-	// ret = read_d(0, buf, 32);
-	// if(ret == -1) return FAIL;
-	// printf(buf[0]);
 	return PASS;
 }
 /* Checkpoint 3 tests */
@@ -178,8 +169,8 @@ void launch_tests(){
 	//TEST_OUTPUT("page test", paging_test());
 	//TEST_OUTPUT("page test 2", paging_test_2());
 	//TEST_OUTPUT("div_zero_test", div_zero_test());
-	//TEST_OUTPUT("file system cat test", cat_test("frame0.txt"));
-	TEST_OUTPUT("list dir test", list_dir());
+	TEST_OUTPUT("file system cat test", cat_test("ls"));
+	//TEST_OUTPUT("list dir test", list_dir());
 	//TEST_OUTPUT("term", test_terminal());
 	//TEST_OUTPUT("rtc", test_rtc());
 	while(1);

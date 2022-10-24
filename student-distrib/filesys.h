@@ -50,7 +50,6 @@ extern int write_d(int32_t fd, const void *buf, int32_t nbytes);
 extern int close_d(int32_t fd);
 extern int read_d(int32_t fd, void *buf, int32_t nbytes);
 
-
-extern boot_block_t *boot; 
+ 
 
 #endif /* FILESYS_H */
