@@ -8,6 +8,10 @@ dentry_t* dentry_obj;
 uint32_t inode_num;
 
 
+/* int32_t file_init(boot_block_t *boot);
+ * Inputs: boot_block_t *boot
+ * Return Value: 0
+ * Function: inits filesystem */
 int32_t file_init(boot_block_t *boot){
     origin = boot;
     root_inode = (origin + 1);
@@ -17,7 +21,10 @@ int32_t file_init(boot_block_t *boot){
     return 0;
 }
 
-
+/* int32_t read_dentry_by_name (const uint8_t* fname, dentry_t* dentry);
+ * Inputs: const uint8_t* fname, dentry_t* dentry
+ * Return Value: -1 if not found, 0 if found
+ * Function: reads dentry by index */
 int32_t read_dentry_by_index (uint32_t index, dentry_t* dentry){
     int i = 0;
     if(index > ENTRY_NUM || index < 0) return -1;
@@ -28,6 +35,10 @@ int32_t read_dentry_by_index (uint32_t index, dentry_t* dentry){
     return 0;
 }
 
+/* int32_t read_dentry_by_name (const uint8_t* fname, dentry_t* dentry);
+ * Inputs: const uint8_t* fname, dentry_t* dentry
+ * Return Value: -1 if not found, 0 if found
+ * Function: reads dentry by name */
 int32_t read_dentry_by_name (const uint8_t* fname, dentry_t* dentry){
     int idx = 0; //file index
     int i;
@@ -47,6 +58,10 @@ int32_t read_dentry_by_name (const uint8_t* fname, dentry_t* dentry){
     return -1;
 }
 
+/* int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length);
+ * Inputs: uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length
+ * Return Value: -1 if not found, 0 if found
+ * Function: reads data */
 int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length){
     inode_t* inode_ptr;
     uint32_t datab_num;
@@ -75,25 +90,46 @@ int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t lengt
     return 0;
 }
 
+/* int32_t open_f(const uint8_t* filename);
+ * Inputs: const uint8_t* filename
+ * Return Value: -1 if not found, 0 if found
+ * Function: opens file */
+*/
 int32_t open_f(const uint8_t* filename){
     if(filename == NULL) return -1;
     return read_dentry_by_name(filename, dentry_obj);
 }
 
+/* int32_t write_f(int32_t fd, void* buf, int32_t nbytes);
+ * Inputs: int32_t fd, void* buf, int32_t nbytes
+ * Return Value: -1 
+ * Function: writes file */
 int write_f(int32_t fd, const void *buf, int32_t nbytes){
     return -1;
 }
 
+/* int32_t close_f(int32_t fd);
+ * Inputs: int32_t fd
+ * Return Value: -1 
+ * Function: closes file */
 int close_f(int32_t fd){
     
     return 0;
 }
 
+/* int32_t file_read(int32_t fd, void* buf, int32_t nbytes);
+ * Inputs: int32_t fd, void* buf, int32_t nbytes
+ * Return Value: -1 if not found, 0 if found
+ * Function: reads file */
 int read_f(int32_t fd, void *buf, int32_t nbytes){
    
     return read_data(fd,0, buf, nbytes);
 }
 
+/* int32_t open_d(const uint8_t* filename);
+ * Inputs: const uint8_t* filename
+ * Return Value: -1 if not found, 0 if found
+ * Function: opens directory */
 int32_t open_d(const uint8_t* filename){
     if(filename == NULL) return 0;
     read_dentry_by_name(filename, dentry_obj);
@@ -103,14 +139,26 @@ int32_t open_d(const uint8_t* filename){
     return -1;
 }
 
+/* int32_t write_d(int32_t fd, void* buf, int32_t nbytes);
+ * Inputs: int32_t fd, void* buf, int32_t nbytes
+ * Return Value: -1 
+ * Function: writes directory */
 int write_d(int32_t fd, const void *buf, int32_t nbytes){
     return -1;
 }
 
+/* int32_t close_d(int32_t fd);
+ * Inputs: int32_t fd
+ * Return Value: -1 
+ * Function: closes directory */
 int close_d(int32_t fd){
     return 0;
 }
 
+/* int32_t read_d(int32_t fd, void* buf, int32_t nbytes);
+ * Inputs: int32_t fd, void* buf, int32_t nbytes
+ * Return Value: -1 if not found, 0 if found
+ * Function: reads directory */
 int read_d(int32_t fd, void *buf, int32_t nbytes){
     if(buf == NULL) return -1;
     if(fd > 62 || fd < 0 ) return -1;  //check  if file index out of bound
