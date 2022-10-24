@@ -70,12 +70,14 @@ int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t lengt
     uint32_t datab_num;
     data_block_t* data_block;
     uint32_t data_block_offset;
+    uint32_t file_len;
     int i = 0;
     int end;
     uint32_t data_block_idx = offset/4096;
     if(inode >= inode_num || data_block_idx >= DATA_NUMBER) return -1; //bounds checking
 
     inode_ptr = root_inode + inode; // get inode from inode offset
+    file_len = inode_ptr->length;
     datab_num = inode_ptr->data_block_num[data_block_idx];  //get data block num from inode specified by offset
     data_block_offset = offset % 4096; //data block offset is the offset of the data block
 
@@ -83,6 +85,9 @@ int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t lengt
     end = length; //end of length
 
     for(i = 0; i < end; i++){
+        if(i == file_len){
+            break;
+        }
         if(i + data_block_offset == 4096){ //4096 is the last index of the current data block
             data_block_idx++; //go to next datablock
             data_block_offset = 0;
@@ -93,12 +98,16 @@ int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t lengt
     return 0;
 }
 
+uint32_t get_file_len(dentry_t* dentry){
+    return ((inode_t *)(root_inode + dentry->inode_num))->length;
+}
+
 /* int32_t open_f(const uint8_t* filename);
  * Inputs: const uint8_t* filename
  * Return Value: -1 if not found, 0 if found
  * Function: opens file */
-*/
 int32_t open_f(const uint8_t* filename){
+    int i;
     if(filename == NULL) return -1;
     return read_dentry_by_name(filename, dentry_obj); //open file by reading the filename
 }

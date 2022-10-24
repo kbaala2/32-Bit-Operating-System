@@ -120,6 +120,7 @@ int test_rtc() {
 int cat_test(uint8_t* filename){
 	TEST_HEADER;
 	int i;
+	uint32_t file_len;
 	dentry_t dentry;
 	char buf[10000];
 	clear();
@@ -131,14 +132,56 @@ int cat_test(uint8_t* filename){
 	if(read_dentry_by_name(filename, &dentry) == -1){
 		return FAIL;
 	}
-	if(read_data(dentry.inode_num, 0 , buf, 20) == -1) {
+	file_len = get_file_len(&dentry);
+	if(read_data(dentry.inode_num, 0 , buf, file_len) == -1) {
 		return FAIL;
 	}
 	clear();
 	clear_pos();
-	for(i = 0; i < 20; i++){
+	for(i = 0; i < file_len; i++){
 		putc(buf[i]);
 	}
+	// clear();
+	// clear_pos();
+	// printf("%u", file_len);
+	//i = 0;
+	// while(buf[i]){
+	// 	putc(buf[i]);
+	// 	i++;
+	// }
+	return PASS;	
+}
+
+int cat_exec_test(uint8_t* filename){
+	TEST_HEADER;
+	int i;
+	dentry_t dentry;
+	char buf[10000];
+	clear();
+	clear_pos();
+	if(open_f(filename) == -1){
+		printf("invalid filename");
+		return FAIL;
+	}
+	if(read_dentry_by_name(filename, &dentry) == -1){
+		return FAIL;
+	}
+	if(read_data(dentry.inode_num, 0 , buf, 1000) == -1) {
+		return FAIL;
+	}
+	clear();
+	clear_pos();
+	for(i = 0; i < 1000; i++){
+		putc(buf[i]);
+	}
+	// clear();
+	// clear_pos();
+	// printf("%u", file_len);
+	//i = 0;
+	// while(buf[i]){
+	// 	putc(buf[i]);
+	// 	i++;
+	// }
 	return PASS;	
 }
 
@@ -169,7 +212,8 @@ void launch_tests(){
 	//TEST_OUTPUT("page test", paging_test());
 	//TEST_OUTPUT("page test 2", paging_test_2());
 	//TEST_OUTPUT("div_zero_test", div_zero_test());
-	TEST_OUTPUT("file system cat test", cat_test("ls"));
+	//TEST_OUTPUT("file system cat test", cat_test("verylargetextwithverylongname.tx"));
+	//TEST_OUTPUT("file system cat exec test", cat_exec_test("ls"));
 	//TEST_OUTPUT("list dir test", list_dir());
 	//TEST_OUTPUT("term", test_terminal());
 	//TEST_OUTPUT("rtc", test_rtc());

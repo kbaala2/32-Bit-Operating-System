@@ -56,7 +56,7 @@ int rtc_open(int32_t fd){
 /* void rtc_read(int32_t fd, void *buf, int32_t nbytes);
  * Inputs: int32_t fd - file data
            void *buf - buffer that hold frequency
-           int32_t nbytes - 
+           int32_t nbytes - N/A
  * Return Value: none
  * Function: blocks until next interrupt*/
 int rtc_read(int32_t fd, void *buf, int32_t nbytes){
@@ -67,30 +67,40 @@ int rtc_read(int32_t fd, void *buf, int32_t nbytes){
     return 0; 
 }
 
+/* int rtc_write(int32_t fd, const void *buf, int32_t nbytes)
+ * Inputs: int32_t fd - file data
+ *         const void *buf - buffer that holds frequency
+ *         in32_t nbytes - N/A
+ * Return Value: none
+ * Function: writes new frequency from the buffer to the RTC 
+ */ 
 int rtc_write(int32_t fd, const void *buf, int32_t nbytes){
     int target;
     int rate;
     int new_rate;
-    int max_freq = 32768;
+    int max_freq = 32768; //max frequency value
     int* result = (int*)buf;
     int freq = result[0];
 
-    
-    if(freq == NULL || ((freq & (freq - 1)) != 0)){
+    if(freq == NULL || ((freq & (freq - 1)) != 0)){ // check if freq is a power of 2 and is not null 
         return -1;
     }
 
+    /*check for each rate if the target frequency is equal to the new frequency, then set the new rate*/
     for(rate = 3; rate < 17; rate++){
         target = max_freq >> (rate - 1);
+        /*set new rate*/
         if(target == freq){
             new_rate = rate - 1;
             break;
         }
     }
+    /*check if new rate is within bounds*/
     if(new_rate < 6){
         new_rate = 6;
     }
 
+    /*set new frequency*/
     outb(0x8A, 0x70);		// set index to register A, disable NMI
     char prev=inb(0x71);	// get initial value of register A
     outb(0x8A, 0x70);		// reset index to A
