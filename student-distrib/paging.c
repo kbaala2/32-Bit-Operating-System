@@ -82,6 +82,6 @@ void page_init(){
     pde[1].present = 1;
 
     /* load page directory and enable paging for 4MB page and 4kB page*/
-    loadPageDirectory(pde);
+    loadPageDirectory((uint32_t* )pde);
     enablePaging();
 }

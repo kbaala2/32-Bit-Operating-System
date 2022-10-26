@@ -14,7 +14,7 @@ uint32_t inode_num;
  * Function: inits filesystem */
 int32_t file_init(boot_block_t *boot){
     origin = boot;                                              // ptr to boot block
-    root_inode = (origin + 1);                                  // ptr to first inode
+    root_inode = (inode_t*)(origin + 1);                                  // ptr to first inode
     inode_num = origin->inode_count;                            // holds total number of inodes 
     dentry_obj = &(origin->direntries[2]);                      // ptr to 2nd dentry    
     first_data_block = (data_block_t*)(origin + inode_num + 1); //contains ptr to the first data block
@@ -26,7 +26,6 @@ int32_t file_init(boot_block_t *boot){
  * Return Value: -1 if not found, 0 if found
  * Function: reads dentry by index */
 int32_t read_dentry_by_index (uint32_t index, dentry_t* dentry){
-    int i = 0;
     if(index > ENTRY_NUM || index < 0) return -1;                                           //check if idx is within bounds
     
     /*copy to dentry object*/
@@ -42,7 +41,6 @@ int32_t read_dentry_by_index (uint32_t index, dentry_t* dentry){
  * Function: reads dentry by name */
 int32_t read_dentry_by_name (const uint8_t* fname, dentry_t* dentry){
     int idx = 0; //file index
-    int i;
 
     if(strlen((int8_t*)fname) > FILENAME_LEN || fname == NULL) return -1; //check if the filename is not NULL and is at max 32 characters
 
@@ -73,10 +71,11 @@ int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t lengt
     uint32_t file_len;
     int i = 0;
     int end;
-    uint32_t idx;
-    uint32_t data_block_idx = offset/4096;
+    uint32_t data_block_idx;
     if(inode >= inode_num || data_block_idx >= DATA_NUMBER) return -1; //bounds checking
 
+
+    data_block_idx = offset/4096;
     inode_ptr = root_inode + inode; // get inode from inode offset
     file_len = inode_ptr->length;
     datab_num = inode_ptr->data_block_num[data_block_idx];  //get data block num from inode specified by offset
@@ -113,7 +112,6 @@ uint32_t get_file_len(dentry_t* dentry){
  * Return Value: -1 if not found, 0 if found
  * Function: opens file */
 int32_t open_f(const uint8_t* filename){
-    int i;
     if(filename == NULL) return -1;
     return read_dentry_by_name(filename, dentry_obj); //open file by reading the filename
 }

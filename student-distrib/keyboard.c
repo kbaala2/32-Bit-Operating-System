@@ -8,7 +8,7 @@
 int shift_flag = 0;
 int ctrl_flag = 0;
 int caps_flag = 0;
-char* kb_buffer[128];
+char kb_buffer[128];
 int count = 0;
 int clear_screen = 0;
 int enter_pressed = 0;
@@ -119,7 +119,7 @@ void keyboard_handler(void){
     
     /*check if valid input (is alphanumeric character or enter, tab, backspace). Range for alphanumeric characters in ASCII table is between
     32-127, and range for enter, tab, backspace is between 8 and 10*/
-    if((key_map[scan_code] >= 32 && key_map[scan_code] <= 127) || (key_map[scan_code] >= 8 && key_map[scan_code] <= 10)){
+    if((key_map[scan_code] >= 32) || (key_map[scan_code] >= 8 && key_map[scan_code] <= 10)){
 
         //ctrl + l, scan_code for l is 0x26
         if(ctrl_flag == 1 && scan_code == 0x26){

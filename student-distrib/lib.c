@@ -177,7 +177,7 @@ void putc(uint8_t c) {
         screen_x = 0;
         int i;
         for (i = NUM_COLS; i < NUM_ROWS * NUM_COLS; i++) {
-            *(uint8_t *)(video_mem + (i-NUM_COLS << 1)) = *(uint8_t *)(video_mem + (i << 1));
+            *(uint8_t *)(video_mem + ((i-NUM_COLS) << 1)) = *(uint8_t *)(video_mem + (i << 1));
             *(uint8_t *)(video_mem + (i << 1) + 1) = 0x3;
         }
         for (i = (NUM_COLS * (NUM_ROWS-1)); i < NUM_ROWS * NUM_COLS; i++) {
@@ -189,7 +189,7 @@ void putc(uint8_t c) {
             screen_x = 0;
             int i;
             for (i = NUM_COLS; i < NUM_ROWS * NUM_COLS; i++) {
-                *(uint8_t *)(video_mem + (i-NUM_COLS << 1)) = *(uint8_t *)(video_mem + (i << 1));
+                *(uint8_t *)(video_mem + ((i-NUM_COLS) << 1)) = *(uint8_t *)(video_mem + (i << 1));
                 *(uint8_t *)(video_mem + (i << 1) + 1) = 0x3;
             }
             for (i = (NUM_COLS * (NUM_ROWS-1)); i < NUM_ROWS * NUM_COLS; i++) {
