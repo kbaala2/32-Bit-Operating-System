@@ -169,13 +169,37 @@ int32_t puts(int8_t* s) {
  * Return Value: void
  *  Function: Output a character to the console */
 void putc(uint8_t c) {
-    if(screen_x == 79){
+    if(screen_x == 80 && screen_y < 24){
         screen_y++;
         screen_x = 0;
     }
-    if(c == '\n' || c == '\r') {
-        screen_y++;
+    if(screen_x == 80 && screen_y == 24){
         screen_x = 0;
+        int i;
+        for (i = NUM_COLS; i < NUM_ROWS * NUM_COLS; i++) {
+            *(uint8_t *)(video_mem + (i-NUM_COLS << 1)) = *(uint8_t *)(video_mem + (i << 1));
+            *(uint8_t *)(video_mem + (i << 1) + 1) = 0x3;
+        }
+        for (i = (NUM_COLS * (NUM_ROWS-1)); i < NUM_ROWS * NUM_COLS; i++) {
+            *(uint8_t *)(video_mem + (i << 1)) = ' ';
+        }
+    }
+    if(c == '\n' || c == '\r') {
+        if(screen_y == 24 || screen_x == 79){
+            screen_x = 0;
+            int i;
+            for (i = NUM_COLS; i < NUM_ROWS * NUM_COLS; i++) {
+                *(uint8_t *)(video_mem + (i-NUM_COLS << 1)) = *(uint8_t *)(video_mem + (i << 1));
+                *(uint8_t *)(video_mem + (i << 1) + 1) = 0x3;
+            }
+            for (i = (NUM_COLS * (NUM_ROWS-1)); i < NUM_ROWS * NUM_COLS; i++) {
+                *(uint8_t *)(video_mem + (i << 1)) = ' ';
+            }
+        }
+        else{
+            screen_y++;
+            screen_x = 0;
+        }
     } 
     else if(c == '\b'){
         if(tab_flag) {
@@ -208,8 +232,8 @@ void putc(uint8_t c) {
         *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1)) = c;
         *(uint8_t *)(video_mem + ((NUM_COLS * screen_y + screen_x) << 1) + 1) = 0x3;
         screen_x++;
-        screen_x %= NUM_COLS;
-        screen_y = (screen_y + (screen_x / NUM_COLS)) % NUM_ROWS;
+        // screen_x %= NUM_COLS;
+        screen_y = (screen_y + ((screen_x % NUM_COLS) / NUM_COLS)) % NUM_ROWS;
     }
 }
 

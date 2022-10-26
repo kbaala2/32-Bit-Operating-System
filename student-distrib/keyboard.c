@@ -154,16 +154,17 @@ void keyboard_handler(void){
                     kb_buffer[count] = '\0';
                 }
             }
+
             else{
                 //check if either shift or caps is high but not both
-                if(shift_flag ^ caps_flag){
+                if((shift_flag ^ caps_flag) || ((caps_flag) && (shift_flag) && ((int)key_map[scan_code] < 97 || (int)key_map[scan_code] > 122))){
                     //checks which char that might need to be shifted up is
                     switch((int)key_map[scan_code]){
                         /* each case represents the ascii value of the char that we are checking to see 
                             if it should be shifted or not. if caps flag is low than we to use the shifted ascii value*/
                         //case for ` -> ~
                         case 96: 
-                            if(caps_flag){
+                            if(caps_flag && !shift_flag){
                                 shifted_char = 96;
                             }
                             else{
@@ -172,7 +173,7 @@ void keyboard_handler(void){
                             break;
                         //case for 1 -> !
                         case 49:
-                            if(caps_flag){
+                            if(caps_flag && !shift_flag){
                                 shifted_char = 49;
                             }
                             else{
@@ -181,7 +182,7 @@ void keyboard_handler(void){
                             break;
                         //case for 2 -> @
                         case 50:
-                            if(caps_flag){
+                            if(caps_flag && !shift_flag){
                                 shifted_char = 50;
                             }
                             else{
@@ -190,7 +191,7 @@ void keyboard_handler(void){
                             break;
                         // case for 3 -> #
                         case 51:
-                            if(caps_flag){
+                            if(caps_flag && !shift_flag){
                                 shifted_char = 51;
                             }
                             else{
@@ -199,7 +200,7 @@ void keyboard_handler(void){
                             break;
                         // case for 4 -> $
                         case 52:
-                            if(caps_flag){
+                            if(caps_flag && !shift_flag){
                                 shifted_char = 52;
                             }
                             else{
@@ -208,7 +209,7 @@ void keyboard_handler(void){
                             break;
                         // case for 5 -> %
                         case 53:
-                            if(caps_flag){
+                            if(caps_flag && !shift_flag){
                                 shifted_char = 53;
                             }
                             else{
@@ -217,7 +218,7 @@ void keyboard_handler(void){
                             break;
                         // case for 6 -> ^
                         case 54:
-                            if(caps_flag){
+                            if(caps_flag && !shift_flag){
                                 shifted_char = 54;
                             }
                             else{
@@ -226,7 +227,7 @@ void keyboard_handler(void){
                             break;
                         // case for 7 -> &
                         case 55:
-                            if(caps_flag){
+                            if(caps_flag && !shift_flag){
                                 shifted_char = 55;
                             }
                             else{
@@ -235,7 +236,7 @@ void keyboard_handler(void){
                             break;
                         // case for 8 -> *
                         case 56:
-                            if(caps_flag){
+                            if(caps_flag && !shift_flag){
                                 shifted_char = 56;
                             }
                             else{
@@ -244,7 +245,7 @@ void keyboard_handler(void){
                             break;
                         // case for 9 -> (
                         case 57:
-                            if(caps_flag){
+                            if(caps_flag && !shift_flag){
                                 shifted_char = 57;
                             }
                             else{
@@ -253,7 +254,7 @@ void keyboard_handler(void){
                             break;
                         // case for 0 -> )
                         case 48:
-                            if(caps_flag){
+                            if(caps_flag && !shift_flag){
                                 shifted_char = 48;
                             }
                             else{
@@ -262,7 +263,7 @@ void keyboard_handler(void){
                             break;
                         // case for - -> _
                         case 45:
-                            if(caps_flag){
+                            if(caps_flag && !shift_flag){
                                 shifted_char = 45;
                             }
                             else{
@@ -271,7 +272,7 @@ void keyboard_handler(void){
                             break;
                         // case for = -> +
                         case 61:
-                            if(caps_flag){
+                            if(caps_flag && !shift_flag){
                                 shifted_char = 61;
                             }
                             else{
@@ -280,7 +281,7 @@ void keyboard_handler(void){
                             break;
                         // case for [ -> {
                         case 91:
-                            if(caps_flag){
+                            if(caps_flag && !shift_flag){
                                 shifted_char = 91;
                             }
                             else{
@@ -289,7 +290,7 @@ void keyboard_handler(void){
                             break;
                         // case for ] -> }
                         case 93:
-                            if(caps_flag){
+                            if(caps_flag && !shift_flag){
                                 shifted_char = 93;
                             }
                             else{
@@ -298,7 +299,7 @@ void keyboard_handler(void){
                             break;
                         // case for \ -> |
                         case 92:
-                            if(caps_flag){
+                            if(caps_flag && !shift_flag){
                                 shifted_char = 92;
                             }
                             else{
@@ -307,7 +308,7 @@ void keyboard_handler(void){
                             break;
                         // case for ; -> :
                         case 59:
-                            if(caps_flag){
+                            if(caps_flag && !shift_flag){
                                 shifted_char = 59;
                             }
                             else{
@@ -316,7 +317,7 @@ void keyboard_handler(void){
                             break;
                         // case for ' -> "
                         case 39:
-                            if(caps_flag){
+                            if(caps_flag && !shift_flag){
                                 shifted_char = 39;
                             }
                             else{
@@ -325,7 +326,7 @@ void keyboard_handler(void){
                             break;
                         // case for , -> <
                         case 44:
-                            if(caps_flag){
+                            if(caps_flag && !shift_flag){
                                 shifted_char = 44;
                             }
                             else{
@@ -334,7 +335,7 @@ void keyboard_handler(void){
                             break;
                         // case for . -> >
                         case 46:
-                            if(caps_flag){
+                            if(caps_flag && !shift_flag){
                                 shifted_char = 46;
                             }
                             else{
@@ -343,7 +344,7 @@ void keyboard_handler(void){
                             break;
                         // case for / -> ?
                         case 47:
-                            if(caps_flag){
+                            if(caps_flag && !shift_flag){
                                 shifted_char = 47;
                             }
                             else{
@@ -352,7 +353,7 @@ void keyboard_handler(void){
                             break;
                         // case for enter
                         case 10:
-                            if(caps_flag){
+                            if(caps_flag && !shift_flag){
                                 shifted_char = 10;
                             }
                             else{
