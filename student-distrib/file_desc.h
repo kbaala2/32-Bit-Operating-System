@@ -19,6 +19,11 @@ file_descriptor_t file_descriptor_array[FD_SIZE];
 
 extern void init_fdarr(file_descriptor_t* file_descriptor_array);
 extern void stdin(int32_t fd, void* buf, int32_t nbytes);
-extern void stdout(int32_t fd, const void* buf, int32_t nbytes);
+extern int32_t stdout(int32_t fd, const void* buf, int32_t nbytes);
+
+extern int32_t open_handler(const uint8_t* filename);
+extern int32_t write_handler(int32_t fd, const void *buf, int32_t nbytes);
+extern int32_t close_handler(int32_t fd);
+extern int32_t read_handler(int32_t fd, void *buf, int32_t nbytes);
 
 #endif /* FILE_DESC_H */
