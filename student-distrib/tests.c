@@ -5,6 +5,7 @@
 #include "keyboard.h"
 #include "rtc.h"
 #include "filesys.h"
+#include "file_desc.h"
 
 #define PASS 1
 #define FAIL 0
@@ -205,6 +206,27 @@ int list_dir(){
 	return PASS;
 }
 /* Checkpoint 3 tests */
+
+int sys_call_test(){
+	#define DO_CALL(name,number)       \
+	asm volatile ("                    \
+	.GLOBL " #name "                  ;\
+	" #name ":                        ;\
+			PUSHL	%EBX              ;\
+		MOVL	$" #number ",%EAX ;\
+		MOVL	8(%ESP),%EBX      ;\
+		MOVL	12(%ESP),%ECX     ;\
+		MOVL	16(%ESP),%EDX     ;\
+		INT	$0x80             ;\
+		CMP	$0xFFFFC000,%EAX  ;\
+		JBE	1f                ;\
+		MOVL	$-1,%EAX	  ;\
+	1:	POPL	%EBX              ;\
+		RET                        \
+	")
+	DO_CALL(write_handler, 4);
+}
+
 /* Checkpoint 4 tests */
 /* Checkpoint 5 tests */
 
@@ -217,8 +239,9 @@ void launch_tests(){
 	//TEST_OUTPUT("div_zero_test", div_zero_test());
 	//TEST_OUTPUT("file system cat test", cat_test("verylargetextwithverylongname.tx"));
 	//TEST_OUTPUT("list dir test", list_dir());
-	TEST_OUTPUT("term", test_terminal());
+	//TEST_OUTPUT("term", test_terminal());
 	//TEST_OUTPUT("rtc", test_rtc());
+	TEST_OUTPUT("sys call test", sys_call_test());
 	while(1);
 	// launch your tests here
 	

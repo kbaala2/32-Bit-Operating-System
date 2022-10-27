@@ -3,6 +3,8 @@
 #include "filesys.h"
 
 #define START_OF_USER 0x800000
+#define START_OF_KERNEL 0x400000
+#define KERNEL_STACK_SIZE 0x2000
 
 int32_t prog_eip;
 char buf[4];
@@ -38,4 +40,35 @@ int check_executable(char* filename){
     return 1;
 }
 
-void 
+int32_t sys_call_execute(const char* cmd){
+    if(!check_executable(cmd)) {
+        return -1;
+    }
+    struct pcb_t* pc = find_avail_pcb();
+        pc.active = 1;
+        pc.parent_pid = prog_counter;
+        prog_counter++;
+        pc.pid = prog_counter;
+
+    map_memory(prog_counter);
+}
+
+struct pcb_t* find_avail_pcb(){
+    int i = 0;
+    for(i = START_OF_USER - KERNEL_STACK_SIZE; i > START_OF_KERNEL; i -= KERNEL_STACK_SIZE){
+        struct pcb_t* prog = i;
+        if(prog->active){
+            return prog;
+        }
+    }
+    return NULL;
+}
+
+
+
+
+
+
+
+
+
