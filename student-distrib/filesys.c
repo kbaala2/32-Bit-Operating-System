@@ -128,7 +128,7 @@ int write_f(int32_t fd, const void *buf, int32_t nbytes){
  * Inputs: int32_t fd
  * Return Value: -1 
  * Function: closes file */
-int close_f(int32_t fd){
+int32_t close_f(int32_t fd){
     return 0;
 }
 
@@ -136,7 +136,7 @@ int close_f(int32_t fd){
  * Inputs: int32_t fd, void* buf, int32_t nbytes
  * Return Value: -1 if not found, 0 if found
  * Function: reads file */
-int read_f(int32_t fd, void *buf, int32_t nbytes){
+int32_t read_f(int32_t fd, void *buf, int32_t nbytes){
     return read_data(fd,0, buf, nbytes); //read file data in read file function
 }
 
@@ -158,7 +158,7 @@ int32_t open_d(const uint8_t* filename){
  * Inputs: int32_t fd, void* buf, int32_t nbytes
  * Return Value: -1 
  * Function: writes directory */
-int write_d(int32_t fd, const void *buf, int32_t nbytes){
+int32_t write_d(int32_t fd, const void *buf, int32_t nbytes){
     return -1;
 }
 
@@ -166,7 +166,7 @@ int write_d(int32_t fd, const void *buf, int32_t nbytes){
  * Inputs: int32_t fd
  * Return Value: -1 
  * Function: closes directory */
-int close_d(int32_t fd){
+int32_t close_d(int32_t fd){
     return 0;
 }
 
@@ -174,7 +174,7 @@ int close_d(int32_t fd){
  * Inputs: int32_t fd, void* buf, int32_t nbytes
  * Return Value: -1 if not found, 0 if found
  * Function: reads directory */
-int read_d(int32_t fd, void *buf, int32_t nbytes){
+int32_t read_d(int32_t fd, void *buf, int32_t nbytes){
     if(buf == NULL) return -1;         // null check
     if(fd > 62 || fd < 0 ) return -1;  //check  if file index out of bound
     int i =0;
