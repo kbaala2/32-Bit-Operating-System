@@ -3,13 +3,22 @@
 
 #include "types.h"
 #include "filesys.h"
+#include "rtc.h"
+#include "filesys.h"
+#include "terminal.h"
 
+/*jmp_pointer->open = &open_f */
 #define FD_SIZE 8
 
-
+typedef struct file_operations_table {
+    int (*open)(char* filename);
+    int (*read)(int32_t fd, void *buf, int32_t nbytes);
+    int (*write)(int32_t fd, const void *buf, int32_t nbytes);
+    int (*close)(int32_t fd);
+}file_operations_table_t;
 
 typedef struct __attribute__ ((packed)) file_descriptor {
-    uint32_t* jmp_pointer;
+    file_operations_table_t* jmp_pointer; 
     uint32_t inode_num;
     uint32_t file_position;
     uint8_t flag;
