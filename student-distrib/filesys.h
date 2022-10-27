@@ -32,7 +32,7 @@ typedef struct __attribute__ ((packed)) inode {
 } inode_t;
 
 typedef struct __attribute__ ((packed)) data_block {
-    uint8_t* data_block_array;
+    uint8_t data[4096];
 } data_block_t;
 
 extern int32_t file_init(boot_block_t *boot);
@@ -41,16 +41,15 @@ extern int32_t read_dentry_by_index (uint32_t index, dentry_t* dentry);
 extern int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length);
 
 extern int32_t open_f(const uint8_t* filename);
-extern int write_f(int32_t fd, const void *buf, int32_t nbytes);
-extern int close_f(int32_t fd);
-extern int read_f(int32_t fd, void *buf, int32_t nbytes);
+extern int32_t write_f(int32_t fd, const void *buf, int32_t nbytes);
+extern int32_t close_f(int32_t fd);
+extern int32_t read_f(int32_t fd, void *buf, int32_t nbytes);
 
 extern int32_t open_d(const uint8_t* filename);
-extern int write_d(int32_t fd, const void *buf, int32_t nbytes);
-extern int close_d(int32_t fd);
-extern int read_d(int32_t fd, void *buf, int32_t nbytes);
+extern int32_t write_d(int32_t fd, const void *buf, int32_t nbytes);
+extern int32_t close_d(int32_t fd);
+extern int32_t read_d(int32_t fd, void *buf, int32_t nbytes);
 
-
-extern boot_block_t *boot; 
+ 
 
 #endif /* FILESYS_H */
