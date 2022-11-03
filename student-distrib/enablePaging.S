@@ -3,7 +3,7 @@
 
 .text
 
-.globl loadPageDirectory, enablePaging
+.globl loadPageDirectory, enablePaging, flush
 
 #loads the cr3 register to load the page directory
 loadPageDirectory:
@@ -27,4 +27,9 @@ enablePaging:
     movl %eax, %cr0
     movl %ebp, %esp
     popl %ebp
+    ret
+
+flush_tlb:
+    movl %cr3, %eax
+    movl %eax, %cr3
     ret

@@ -7,7 +7,7 @@ int check_executable(char* filename);
 void map_memory(int pid);
 void sys_call_execute(const char* cmd);
 extern int prog_counter = 0;
-pcb_t* find_avail_pcb();
+struct pcb_t create_pcb(int pid);
 
 typedef struct __attribute__ ((packed)) pcb_t{
     int pid;
