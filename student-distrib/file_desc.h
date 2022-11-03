@@ -11,7 +11,7 @@
 #define FD_SIZE 8
 
 typedef struct file_operations_table {
-    int (*open)(char* filename);
+    int (*open)(const uint8_t* filename);
     int (*read)(int32_t fd, void *buf, int32_t nbytes);
     int (*write)(int32_t fd, const void *buf, int32_t nbytes);
     int (*close)(int32_t fd);

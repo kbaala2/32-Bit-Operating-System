@@ -50,6 +50,6 @@ extern int32_t write_d(int32_t fd, const void *buf, int32_t nbytes);
 extern int32_t close_d(int32_t fd);
 extern int32_t read_d(int32_t fd, void *buf, int32_t nbytes);
 
- 
+extern int32_t get_filetype_from_inode(uint32_t inode_num);
 
 #endif /* FILESYS_H */

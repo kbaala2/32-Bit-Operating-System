@@ -43,7 +43,7 @@ void rtc_handler() {
  * Inputs: void
  * Return Value: none
  * Function: resets rtc to 2hz*/
-int rtc_open(char* filename){
+int rtc_open(const uint8_t* filename){
     
     outb(0x8A, 0x70);		// set index to register A, disable NMI
     char prev=inb(0x71);	// get initial value of register A
