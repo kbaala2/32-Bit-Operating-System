@@ -138,7 +138,7 @@ int32_t close_f(int32_t fd){
  * Return Value: -1 if not found, 0 if found
  * Function: reads file */
 int32_t read_f(int32_t fd, void *buf, int32_t nbytes){
-    return read_data(file_descriptor_array[fd].inode_num,0, buf, nbytes); //read file data in read file function
+    return read_data(fd,0, buf, nbytes); //read file data in read file function
 }
 
 /* int32_t open_d(const uint8_t* filename);

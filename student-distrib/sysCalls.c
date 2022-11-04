@@ -52,7 +52,7 @@ int check_executable(char* filename){
         return 0;
     }
     int32_t* prog_image;
-    prog_image = 0x8048018;
+    prog_image = (int32_t*)0x8048018;
     prog_eip = (uint32_t)(*(prog_image));
     return 1;
 }
