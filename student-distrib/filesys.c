@@ -1,4 +1,5 @@
 #include "filesys.h"
+#include "sysCalls.h"
 #include "lib.h"
 
 boot_block_t *origin;
@@ -176,17 +177,31 @@ int32_t close_d(int32_t fd){
  * Function: reads directory */
 int32_t read_d(int32_t fd, void *buf, int32_t nbytes){
     if(buf == NULL) return -1;         // null check
-    if(fd > 62 || fd < 0 ) return -1;  //check  if file index out of bound
-    int i =0;
+    int j = 0;
 
     /*loop to check how many bytes is contained in the filename*/
-    for(i =0; i < 32; i++){
-        if(origin->direntries[fd].filename[i] == NULL){
-            nbytes = i;
-            break;
+    if(fd < 63){
+        for(j =0; j < 32; j++){
+            if(origin->direntries[fd].filename[j] == NULL){
+                nbytes = j;
+                break;
+            }
         }
+        memcpy(buf, origin->direntries[fd].filename, sizeof(origin->direntries[fd].filename)); //copy filename to buffer
+        return 1;
     }
-    memcpy(buf, origin->direntries[fd].filename, sizeof(origin->direntries[fd].filename)); //copy filename to buffer
-    return nbytes;
+
+    return 0;
 }
 
+
+
+int32_t get_filetype_from_inode(uint32_t inode_num){
+    int i;
+    for(i = 0; i< 63; i++){
+        if(inode_num == origin->direntries[i].inode_num){
+            return origin->direntries[i].filetype;
+        }
+    }
+    return -1;
+}

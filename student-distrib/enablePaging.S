@@ -28,8 +28,3 @@ enablePaging:
     movl %ebp, %esp
     popl %ebp
     ret
-
-flush_tlb:
-    movl %cr3, %eax
-    movl %eax, %cr3
-    ret

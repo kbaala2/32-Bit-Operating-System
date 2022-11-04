@@ -5,7 +5,6 @@
 #include "keyboard.h"
 #include "rtc.h"
 #include "filesys.h"
-#include "file_desc.h"
 
 #define PASS 1
 #define FAIL 0
@@ -241,7 +240,7 @@ void launch_tests(){
 	//TEST_OUTPUT("list dir test", list_dir());
 	//TEST_OUTPUT("term", test_terminal());
 	//TEST_OUTPUT("rtc", test_rtc());
-	TEST_OUTPUT("sys call test", sys_call_test());
+	//TEST_OUTPUT("sys call test", sys_call_test());
 	while(1);
 	// launch your tests here
 	

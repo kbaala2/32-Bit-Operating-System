@@ -43,7 +43,7 @@ void rtc_handler() {
  * Inputs: void
  * Return Value: none
  * Function: resets rtc to 2hz*/
-int rtc_open(int32_t fd){
+int rtc_open(const uint8_t* filename){
     
     outb(0x8A, 0x70);		// set index to register A, disable NMI
     char prev=inb(0x71);	// get initial value of register A
@@ -87,7 +87,7 @@ int rtc_write(int32_t fd, const void *buf, int32_t nbytes){
     }
 
     /*check for each rate if the target frequency is equal to the new frequency, then set the new rate*/
-    for(rate = 3; rate < 17; rate++){
+    for(rate = 6; rate < 17; rate++){
         target = max_freq >> (rate - 1);
         /*set new rate*/
         if(target == freq){
@@ -106,7 +106,7 @@ int rtc_write(int32_t fd, const void *buf, int32_t nbytes){
     outb(0x8A, 0x70);		// reset index to A
     outb((prev & 0xF0) | new_rate, 0x71); //write only our rate to A. Note, rate is 0x0F, which sets rate to freq
 
-    return 0;
+    return nbytes;
 }
 
 /* void rtc_cclose(int32_t fd);
@@ -116,3 +116,4 @@ int rtc_write(int32_t fd, const void *buf, int32_t nbytes){
 int rtc_close(int32_t fd){
     return 0;
 }
+

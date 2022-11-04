@@ -14,10 +14,6 @@ sys_call_table:
     .long sys_write
     .long sys_open
     .long sys_close
-    .long sys_getargs
-    .long sys_vidmap
-    .long sys_set_handler
-    .long sys_sigreturn
 
 .align 4
 sys_call_handler:
@@ -39,7 +35,7 @@ sys_call_handler:
     cmpl $0, %eax
     jng invalid_call
     
-    call *sys_call_table(0, %eax, 4)
+    call *sys_call_table(, %eax, 4)
     jmp sys_call_complete
 
 invalid_call:
