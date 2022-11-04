@@ -4,6 +4,7 @@
 
 extern void asm_link_kb(void);
 extern void asm_link_rtc(void);
+extern void sys_call_handler(void);
 
 /* void div_by_zero_exception(void);
  * Inputs: void
@@ -256,7 +257,7 @@ void initialize_idt(){
     SET_IDT_ENTRY(idt[17], alignment_check_exception);
     SET_IDT_ENTRY(idt[18], machine_check_exception);
     SET_IDT_ENTRY(idt[19], SIMD_fp_exception);
-    SET_IDT_ENTRY(idt[128], system_call);
+    SET_IDT_ENTRY(idt[128], sys_call_handler);
 
     SET_IDT_ENTRY(idt[33], asm_link_kb);   //kb interrupt
     SET_IDT_ENTRY(idt[40], asm_link_rtc);   //rtc interrupt

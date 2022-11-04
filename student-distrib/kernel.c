@@ -11,8 +11,9 @@
 #include "idt.h"
 #include "keyboard.h"
 #include "filesys.h"
+#include "sysCalls.h"
 
-#define RUN_TESTS
+#define RUN_TESTS 0
 
 /* Macros. */
 /* Check if the bit BIT in FLAGS is set. */
@@ -170,12 +171,15 @@ void entry(unsigned long magic, unsigned long addr) {
     printf("Enabling Interrupts\n");
     sti();
 
-#ifdef RUN_TESTS
-    /* Run tests */
-    launch_tests();
-#endif
+// #ifdef RUN_TESTS
+//     /* Run tests */
+//     launch_tests();
+// #endif
     /* Execute the first program ("shell") ... */
-
+    clear();
+    clear_pos();
+    sys_execute("shell");
+    //sys_write(1, (uint8_t*)"Hello, if this ran, the program was correct. Yay!\n", 50);
     /* Spin (nicely, so we don't chew up cycles) */
     asm volatile (".1: hlt; jmp .1;");
 }

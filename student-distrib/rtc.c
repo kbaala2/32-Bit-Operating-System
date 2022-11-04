@@ -116,3 +116,4 @@ int rtc_write(int32_t fd, const void *buf, int32_t nbytes){
 int rtc_close(int32_t fd){
     return 0;
 }
+
