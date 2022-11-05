@@ -12,8 +12,9 @@ void map_memory(int pid);
 void init_file_operations();
 
 extern int32_t sys_execute(const char* cmd);
-extern void stdin(int32_t fd, void* buf, int32_t nbytes);
-extern int32_t stdout(int32_t fd, const void* buf, int32_t nbytes);
+extern int32_t sys_halt(uint8_t status);
+// extern void stdin(int32_t fd, void* buf, int32_t nbytes);
+// extern int32_t stdout(int32_t fd, const void* buf, int32_t nbytes);
 extern int32_t sys_open(const uint8_t* filename);
 extern int32_t sys_write(int32_t fd, const void *buf, int32_t nbytes);
 extern int32_t sys_close(int32_t fd);

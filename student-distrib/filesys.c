@@ -181,6 +181,7 @@ int32_t read_d(int32_t fd, void *buf, int32_t nbytes){
 
     /*loop to check how many bytes is contained in the filename*/
     if(fd < 63){
+        //if(!strncmp('\0', origin->direntries[fd].filename, sizeof(origin->direntries[fd].filename))) return 0;
         for(j =0; j < 32; j++){
             if(origin->direntries[fd].filename[j] == NULL){
                 nbytes = j;

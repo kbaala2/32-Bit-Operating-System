@@ -15,11 +15,19 @@ char buffer[64];
 extern void flush_tlb();
 extern void goto_user(uint32_t SS, uint32_t ESP, uint32_t eflag_bitmask, uint32_t CS, uint32_t EIP);
 uint32_t dir_index = 0;
-int prog_counter = 0;
+int prog_counter;
+prog_counter = 0;
 int bad_call();
 
 void map_memory(int pid){
+    //printf('!');
+    // void* buf2;
+    // terminal_read(0, buf2, 100);
+    //putc('%');
+    // terminal_read(0, buf2, 100);
     pde[32].page_table_base_addr = (((uint32_t) START_OF_USER) + (pid * 0x400000)) >> 12;
+    //putc('^');
+    // terminal_read(0, buf2, 100);
     pde[32].user_supervisor = 1;
     pde[32].present = 1;
     pde[32].page_size = 1;
@@ -35,10 +43,10 @@ int check_executable(char* filename){
 	}
     read_dentry_by_name((const uint8_t*)filename, &dentry);
     file_len = get_file_len(&dentry);
-    uint8_t temp_buf[file_len];
-    read_data(dentry.inode_num, 0, temp_buf, file_len);
+    //uint8_t temp_buf[file_len];
+    read_data(dentry.inode_num, 0, ((uint32_t*)(0x08048000)), file_len);
     read_data(dentry.inode_num, 0, buf, 4);
-    memcpy(((uint32_t*)(0x08048000)), temp_buf, sizeof((temp_buf)));
+    //memcpy(((uint32_t*)(0x08048000)), temp_buf, sizeof((temp_buf)));
     if((int)buf[0] != 0x7F){
         return 0;
     }
@@ -51,24 +59,36 @@ int check_executable(char* filename){
     if((int)buf[3] != 0x46){
         return 0;
     }
-    int32_t* prog_image;
-    prog_image = 0x8048018;
+    uint32_t* prog_image;
+    prog_image = (uint32_t*)0x8048018;
     prog_eip = (uint32_t)(*(prog_image));
     return 1;
 }
 
 int32_t sys_execute(const char* cmd){
-    cli();
+    // cli();
+    // void* buf1;
+    
     int i = 0;
+    int x;
+    for(x = 0; x < 64; x++){
+        buffer[x] = '\0';
+    }
     int j;
     while(cmd[i] != '\n' && cmd[i] != '\0' && cmd[i] != ' '){
         buffer[i] = cmd[i];
         i++;
     }
+    // putc((uint8_t)(prog_counter + 40));
+    // terminal_read(0, buf1, 100);
     map_memory(prog_counter);
+    // putc('!');
+    // terminal_read(0, buf1, 100);
     if(!check_executable(buffer)) {
         return -1;
-    } 
+    }
+    // putc('&');
+    // terminal_read(0, buf1, 100);
     pcb_t* pc;
     pc = create_pcb(prog_counter);
         pc->active = 1;
@@ -102,15 +122,15 @@ int32_t sys_execute(const char* cmd){
         pc->fd_arr[1].jmp_pointer = &stdout_file_op;
         //pc->fd_arr[1].jmp_pointer->write(1,&buf,128);
         for(j = 2; j < 8; j++){
-            pc->fd_arr[i].flag = 0;
-            pc->fd_arr[i].inode_num = 0;
-            pc->fd_arr[i].file_position = 0;
-            pc->fd_arr[i].jmp_pointer = &bad_file_op;
+            pc->fd_arr[j].flag = 0;
+            pc->fd_arr[j].inode_num = 0;
+            pc->fd_arr[j].file_position = 0;
+            pc->fd_arr[j].jmp_pointer = &bad_file_op;
         }
     tss.esp0 = START_OF_USER - ((prog_counter-1) * KERNEL_STACK_SIZE) - sizeof(int32_t);
     //create and call asm linkage function for iret (userspace)
     goto_user(USER_DS, stack_pointer, eflag_bitmask, USER_CS, prog_eip);
-    sti();
+    // sti();
     return 0;
 }
 
@@ -182,6 +202,7 @@ pcb_t* get_pcb(){
 // }
 
 int32_t sys_halt(uint8_t status){
+    while(1);
     return 0;
 }
 
@@ -234,6 +255,7 @@ int32_t sys_open(const uint8_t* filename){
 int32_t sys_read(int32_t fd, void *buf, int32_t nbytes){
     init_file_operations();
     int filetype;
+    int32_t res;
 
     if(fd < 0 || fd > 7) return -1; //invalid fd index
 
@@ -243,7 +265,8 @@ int32_t sys_read(int32_t fd, void *buf, int32_t nbytes){
 
     if(fd == 0) {
         pc_cur->fd_arr[fd].jmp_pointer = &stdin_file_op;
-        pc_cur->fd_arr[fd].jmp_pointer->read(fd, buf, nbytes);
+        res = pc_cur->fd_arr[fd].jmp_pointer->read(fd, buf, nbytes);
+        return res;
     }
 
     filetype = get_filetype_from_inode(pc_cur->fd_arr[fd].inode_num);
@@ -251,17 +274,24 @@ int32_t sys_read(int32_t fd, void *buf, int32_t nbytes){
 
     if(filetype == 2) {
         pc_cur->fd_arr[fd].jmp_pointer = &file_file_op;
-        pc_cur->fd_arr[fd].jmp_pointer->read(fd, buf, nbytes);
-        pc_cur->fd_arr[fd].file_position += nbytes;
+        res = pc_cur->fd_arr[fd].jmp_pointer->read(fd, buf, nbytes);
+        pc_cur->fd_arr[fd].file_position += res;
+        return res;
     }
     if(filetype == 1){
+        // for(dir_index = 0; dir_index < 63; dir_index++){
+        //     pc_cur->fd_arr[fd].jmp_pointer = &directory_file_op;
+        //     res = pc_cur->fd_arr[fd].jmp_pointer->read(dir_index, buf, nbytes);
+        // }
         pc_cur->fd_arr[fd].jmp_pointer = &directory_file_op;
-        pc_cur->fd_arr[fd].jmp_pointer->read(fd, buf, nbytes);
+        res = pc_cur->fd_arr[fd].jmp_pointer->read(dir_index, buf, nbytes);
         dir_index++; //find way to differentiate between direntry and RTC files
+        return res;
     }
     else{ //file is rtc
         pc_cur->fd_arr[fd].jmp_pointer = &rtc_file_op;
-        pc_cur->fd_arr[fd].jmp_pointer->read(fd, buf, nbytes);
+        res = pc_cur->fd_arr[fd].jmp_pointer->read(fd, buf, nbytes);
+        return res;
     }
     return 0;
 }
@@ -289,7 +319,7 @@ int32_t sys_write(int32_t fd, const void *buf, int32_t nbytes){
         pc_cur->fd_arr[fd].jmp_pointer = &rtc_file_op;
         pc_cur->fd_arr[fd].jmp_pointer->write(fd, buf, nbytes);
     }
-    return -1;
+    return nbytes;
 }
 
 int32_t sys_close(int32_t fd){
