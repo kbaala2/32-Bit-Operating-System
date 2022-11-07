@@ -50,7 +50,8 @@ typedef struct __attribute__ ((packed)) pcb {
     file_descriptor_t fd_arr[8];
 } pcb_t;
 
-pcb_t* create_pcb(int pid);
+pcb_t* get_pcb_from_pid(int pid);
 pcb_t* get_pcb();
+extern int prog_counter;
 
 #endif /* _SYSCALLS_H */

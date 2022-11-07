@@ -6,208 +6,237 @@
 #define START_OF_USER   0x800000
 #define START_OF_KERNEL 0x400000
 #define KERNEL_STACK_SIZE 0x2000
+#define END_OF_VIRTUAL 0x08400000
+#define EXEC_BYTE_1 0x7F
+#define EXEC_BYTE_2 0x45
+#define EXEC_BYTE_3 0x4C
+#define EXEC_BYTE_4 0x46
+#define PROG_IMAGE 0x08048000
+#define PROG_IMAGE_OFFSET 0x8048018
 
 uint32_t prog_eip;
 uint8_t buf[4];
-uint32_t eflag_bitmask = 0x200;
-uint32_t stack_pointer = 0x08400000 - sizeof(int32_t);
-char buffer[64];
+uint32_t eflag_bitmask = 0x200; //masks everything other than the IF bit
+uint32_t stack_pointer = END_OF_VIRTUAL - sizeof(int32_t);
+char buffer[64];    //buffer to transfer command into
 extern void flush_tlb();
 extern void goto_user(uint32_t SS, uint32_t ESP, uint32_t eflag_bitmask, uint32_t CS, uint32_t EIP);
 uint32_t dir_index = 0;
-int prog_counter;
 prog_counter = 0;
 int bad_call();
+extern void ret_to_exec(uint32_t old_ebp, uint32_t old_esp, uint32_t status);
 
+/* void map_memory(int pid)
+ * Inputs: int pid - program id number of the task currently being handled
+ * Return Value: none
+ * Function: helper function that maps virtual memory to physical and flushes the TLB */
 void map_memory(int pid){
-    //printf('!');
-    // void* buf2;
-    // terminal_read(0, buf2, 100);
-    //putc('%');
-    // terminal_read(0, buf2, 100);
-    pde[32].page_table_base_addr = (((uint32_t) START_OF_USER) + (pid * 0x400000)) >> 12;
-    //putc('^');
-    // terminal_read(0, buf2, 100);
+    pde[32].page_table_base_addr = (((uint32_t) START_OF_USER) + (pid * START_OF_KERNEL)) >> 12;    //shifted 12 to make 20 bits long
     pde[32].user_supervisor = 1;
     pde[32].present = 1;
     pde[32].page_size = 1;
     flush_tlb(); //flushing the TLB
 }
 
+/* int check_executable(char* filename)
+ * Inputs: char* filename - string holding the file name to be checked
+ * Return Value: 0 if not an executable file, 1 otherwise
+ * Function: helper function that checks if the given file is an executable file */
 int check_executable(char* filename){
     dentry_t dentry;
-    uint32_t file_len;
-    
-    if(open_f((const uint8_t*)filename) == -1){
+
+    if(open_f((const uint8_t*)filename) == -1){ //returns 0 if file can't be opened
 		return 0;
 	}
-    read_dentry_by_name((const uint8_t*)filename, &dentry);
-    file_len = get_file_len(&dentry);
-    //uint8_t temp_buf[file_len];
-    read_data(dentry.inode_num, 0, ((uint32_t*)(0x08048000)), file_len);
-    read_data(dentry.inode_num, 0, buf, 4);
-    //memcpy(((uint32_t*)(0x08048000)), temp_buf, sizeof((temp_buf)));
-    if((int)buf[0] != 0x7F){
+    read_dentry_by_name((const uint8_t*)filename, &dentry); //get the directory entry of the given file
+    read_data(dentry.inode_num, 0, buf, 4); //read the first 4 bytes of the file into a buffer
+    if((int)buf[0] != EXEC_BYTE_1){
         return 0;
     }
-    if((int)buf[1] != 0x45){
+    if((int)buf[1] != EXEC_BYTE_2){
         return 0;
     }
-    if((int)buf[2] != 0x4C){
+    if((int)buf[2] != EXEC_BYTE_3){
         return 0;
     }
-    if((int)buf[3] != 0x46){
+    if((int)buf[3] != EXEC_BYTE_4){
         return 0;
-    }
-    uint32_t* prog_image;
-    prog_image = (uint32_t*)0x8048018;
-    prog_eip = (uint32_t)(*(prog_image));
-    return 1;
+    }   //returns 0 if any of the first 4 bytes don't match up with the ELF notation
+    return 1;   //return 1 if executable file
 }
 
+/* void set_prog_eip(char* filename)
+ * Inputs: char* filename - string holding the file name to get the eip from
+ * Return Value: none
+ * Function: helper function that gets the running program's eip so that the iret to user knows where to get the program from */
+void set_prog_eip(char* filename){
+    dentry_t dentry;
+    uint32_t file_len;
+
+    read_dentry_by_name((const uint8_t*)filename, &dentry); //get the directory entry of the given file
+    file_len = get_file_len(&dentry);
+    read_data(dentry.inode_num, 0, ((uint32_t*)(PROG_IMAGE)), file_len);    //read the data of the entire file into the virtual address for programs
+    uint32_t* prog_image;
+    prog_image = (uint32_t*)PROG_IMAGE_OFFSET;  //offset 24 bytes into the program to get the specific eip of the program
+    prog_eip = (uint32_t)(*(prog_image));
+}
+
+/* int32_t sys_execute(const char* cmd)
+ * Inputs: const char* cmd - string holding the command name to be executed
+ * Return Value: return value of halt if sys_halt invoked
+ * Function: system call that attempts to load and call a new program */
 int32_t sys_execute(const char* cmd){
-    // cli();
-    // void* buf1;
-    
     int i = 0;
     int x;
     for(x = 0; x < 64; x++){
-        buffer[x] = '\0';
+        buffer[x] = '\0';   //clearing the copy buffer
     }
     int j;
     while(cmd[i] != '\n' && cmd[i] != '\0' && cmd[i] != ' '){
-        buffer[i] = cmd[i];
+        buffer[i] = cmd[i]; //filling the copy buffer with the command name
         i++;
     }
-    // putc((uint8_t)(prog_counter + 40));
-    // terminal_read(0, buf1, 100);
-    map_memory(prog_counter);
-    // putc('!');
-    // terminal_read(0, buf1, 100);
-    if(!check_executable(buffer)) {
+
+    if(!check_executable(buffer)) { //check if command is executable file
         return -1;
     }
-    // putc('&');
-    // terminal_read(0, buf1, 100);
+
+    map_memory(prog_counter);   //map virtual to physical memory for new program
+
+    set_prog_eip(buffer);   //find program's eip for iret
+ 
     pcb_t* pc;
-    pc = create_pcb(prog_counter);
-        pc->active = 1;
+    pc = get_pcb_from_pid(prog_counter);    //get first available PCB from kernel stack
+        pc->active = 1; //set PCB to active
         if(prog_counter == 0){
-            pc->parent_pid = NULL;
+            pc->parent_pid = NULL;  //if PCB is the first program, set parent pid to null
         }
         else{
-            pc->parent_pid = prog_counter - 1;
+            pc->parent_pid = prog_counter - 1;  //otherwise make parent pid one less than current pid
         }
         pc->pid = prog_counter;
         
-        prog_counter++;
+        prog_counter++; //increment global program counter
         asm volatile ("          \n\
                      movl %%ebp, %%eax  \n\
                      movl %%esp, %%ebx  \n\
                 "
                 :"=a"(pc->saved_ebp), "=b"(pc->saved_esp)
-                );
-        // register uint32_t pc.saved_ebp asm("ebp");  //take a look later
-        // register uint32_t pc.saved_esp asm("esp");
+                );  //saving program's ebp and esp
         pc->fd_arr[0].flag = 1;
         pc->fd_arr[1].flag = 1;
         pc->fd_arr[0].inode_num = 0;
         pc->fd_arr[1].inode_num = 0;
         pc->fd_arr[0].file_position = 0;
-        pc->fd_arr[0].file_position = 0;
+        pc->fd_arr[1].file_position = 0;    //initializing the file descriptor array for the first and second entries
         
-        init_file_operations();
-        pc->fd_arr[0].jmp_pointer = &stdin_file_op;
-        //pc->fd_arr[0].jmp_pointer->read(0,buf,0);
-        pc->fd_arr[1].jmp_pointer = &stdout_file_op;
-        //pc->fd_arr[1].jmp_pointer->write(1,&buf,128);
+        init_file_operations(); //calls helper function to initialize all possible file operations
+        pc->fd_arr[0].jmp_pointer = &stdin_file_op; 
+        pc->fd_arr[1].jmp_pointer = &stdout_file_op;    //set the fd array's function pointer to stdin and stdout for indexes 0 and 1 respectively
         for(j = 2; j < 8; j++){
             pc->fd_arr[j].flag = 0;
             pc->fd_arr[j].inode_num = 0;
             pc->fd_arr[j].file_position = 0;
             pc->fd_arr[j].jmp_pointer = &bad_file_op;
-        }
-    tss.esp0 = START_OF_USER - ((prog_counter-1) * KERNEL_STACK_SIZE) - sizeof(int32_t);
-    //create and call asm linkage function for iret (userspace)
-    goto_user(USER_DS, stack_pointer, eflag_bitmask, USER_CS, prog_eip);
-    // sti();
+        }   //for the remaining 6 entries fill with bad file operations and set flags low
+    tss.esp0 = START_OF_USER - ((prog_counter-1) * KERNEL_STACK_SIZE) - sizeof(int32_t);    //sets the TSS esp0 to the kernel stack pointer
+    goto_user(USER_DS, stack_pointer, eflag_bitmask, USER_CS, prog_eip);    //call asm linkage function for iret (userspace)
     return 0;
 }
 
+/* void init_file_operations()
+ * Inputs: none
+ * Return Value: none
+ * Function: helper function to intialize all possible file operations */
 void init_file_operations(){
     stdin_file_op.open = &terminal_open;
     stdin_file_op.write = &bad_call;
     stdin_file_op.close = &terminal_close;
-    stdin_file_op.read = &terminal_read;
+    stdin_file_op.read = &terminal_read;    //sets stdin file operation to do all terminal operations other than write
 
     stdout_file_op.open = &terminal_open;
     stdout_file_op.write = &terminal_write;
     stdout_file_op.close = &terminal_close;
-    stdout_file_op.read = &bad_call;
+    stdout_file_op.read = &bad_call;    //sets stdout file operation to do all terminal operations other than read
 
     rtc_file_op.open = &rtc_open;
     rtc_file_op.write = &rtc_write;
     rtc_file_op.close = &rtc_close;
-    rtc_file_op.read = &rtc_read;
+    rtc_file_op.read = &rtc_read;   //sets rtc file operation to do all rtc operations
 
     directory_file_op.open = &open_d;
     directory_file_op.write = &write_d;
     directory_file_op.close = &close_d;
-    directory_file_op.read = &read_d;
+    directory_file_op.read = &read_d;   //sets directory file operation to do all directory operations
 
     file_file_op.open = &open_f;
     file_file_op.write = &write_f;
     file_file_op.close = &close_f;
-    file_file_op.read = &read_f;
+    file_file_op.read = &read_f;    //sets file file operation to do all file operations
 
     bad_file_op.open = &bad_call;
     bad_file_op.write = &bad_call;
     bad_file_op.close = &bad_call;
-    bad_file_op.read = &bad_call;
+    bad_file_op.read = &bad_call;   //sets bad call operations to return -1 if needed
 }
 
+/* int bad_call()
+ * Inputs: none
+ * Return Value: -1
+ * Function: only returns -1 if needed by an operations call */
 int bad_call(){
     return -1;
 }
 
-pcb_t* create_pcb(int pid){
+/* pcb_t* get_pcb_from_pid(int pid)
+ * Inputs: int pid - current program's pid
+ * Return Value: pointer to pcb struct
+ * Function: helper function that gets a PCB from memory given a specific program id */
+pcb_t* get_pcb_from_pid(int pid){
     pcb_t* i;
-    i = (pcb_t*)(START_OF_USER - ((pid+1) * KERNEL_STACK_SIZE));
+    i = (pcb_t*)(START_OF_USER - ((pid+1) * KERNEL_STACK_SIZE));    //calculates place in memory where PCB exists for given pid
     return i;
 }
 
+/* pcb_t* get_pcb()
+ * Inputs: none
+ * Return Value: pointer to current pcb struct
+ * Function: helper function that gets the current program's PCB from memory */
 pcb_t* get_pcb(){
     pcb_t* cur_pcb;
-    cur_pcb = (pcb_t*)(START_OF_USER - ((prog_counter+1) * KERNEL_STACK_SIZE));
+    cur_pcb = (pcb_t*)(START_OF_USER - ((prog_counter+1) * KERNEL_STACK_SIZE)); //calculates place in memory where current program's PCB exists
     return cur_pcb;
 }
 
-// void stdin(int32_t fd, void* buf, int32_t nbytes){
-//     if(fd != 0){ //check to make sure fd = 0 to indicate stdin
-//         return;
-//     }
-//     nbytes = 0;
-//     while(!nbytes){
-//         nbytes = terminal_read(0, buf, 128);
-//     }
-//     return;
-// }
-
-// int32_t stdout(int32_t fd, const void* buf, int32_t nbytes){
-//     if(fd != 1){ //check to make sure fd = 1 to indicate stdout
-//         return -1;
-//     }
-//     terminal_write(1, buf, nbytes);
-//     return nbytes;
-// }
-
+/* int32_t sys_halt(uint8_t status)
+ * Inputs: uint8_t status - how program was halted
+ * Return Value: 0
+ * Function: system call that terminates a process */
 int32_t sys_halt(uint8_t status){
-    while(1);
+    int i;
+    pcb_t* cur_pcb = get_pcb_from_pid(prog_counter - 1); //gets the current program's PCB
+    pcb_t* parent_pcb;
+    if(prog_counter == 1){  //if current program is the first running one (shell)
+        prog_counter--; //decrement program counter
+        clear();
+        clear_pos();
+        sys_execute("shell");   //start new shell
+    }
+    else{
+        parent_pcb = get_pcb_from_pid(cur_pcb->parent_pid);    //gets the current program's parent's PCB
+    }
+    prog_counter--; //decrement program counter
+    map_memory(parent_pcb->pid);    //re-maps virtual to physical memory for original program
+    for(i = 0; i < 8; i++){
+        cur_pcb->fd_arr[i].flag = 0;    //set all file operation flags to low
+    }
+    tss.ss0 = KERNEL_DS;    //set TSS ss0 to kernel data segment
+    tss.esp0 = START_OF_USER - ((parent_pcb->pid) * KERNEL_STACK_SIZE) - sizeof(int32_t);   //sets the TSS esp0 to the kernel stack pointer
+    ret_to_exec(cur_pcb->saved_ebp, cur_pcb->saved_esp, status);    //call asm linkage function for returning the execute sys call
     return 0;
 }
 
 int32_t sys_open(const uint8_t* filename){
-    init_file_operations();
     int i = 0;
     dentry_t dentry;
 
@@ -219,7 +248,7 @@ int32_t sys_open(const uint8_t* filename){
         return -1;
     }
 
-    pcb_t* pc_cur = get_pcb();
+    pcb_t* pc_cur = get_pcb_from_pid(prog_counter - 1);
 
     for(i = 2; i < 8; i++){
         if(pc_cur->fd_arr[i].flag == 0){
@@ -230,7 +259,6 @@ int32_t sys_open(const uint8_t* filename){
             {
             case 0:
                 /* code to say file is rtc, use jmp pointer */
-                // pc_cur.fd_arr.jmp_pointer = &rtc
                 pc_cur->fd_arr[i].jmp_pointer = &rtc_file_op;
                 pc_cur->fd_arr[i].jmp_pointer->open(filename);
                 return i;
@@ -253,77 +281,29 @@ int32_t sys_open(const uint8_t* filename){
 }
 
 int32_t sys_read(int32_t fd, void *buf, int32_t nbytes){
-    init_file_operations();
     int filetype;
     int32_t res;
+    pcb_t* pc_cur = get_pcb_from_pid(prog_counter - 1);
 
     if(fd < 0 || fd > 7) return -1; //invalid fd index
 
     if(fd == 1) return -1;
-
-    pcb_t* pc_cur = get_pcb();
-
-    if(fd == 0) {
-        pc_cur->fd_arr[fd].jmp_pointer = &stdin_file_op;
-        res = pc_cur->fd_arr[fd].jmp_pointer->read(fd, buf, nbytes);
-        return res;
-    }
-
-    filetype = get_filetype_from_inode(pc_cur->fd_arr[fd].inode_num);
-    if(filetype == -1) return -1; //invalid file
-
-    if(filetype == 2) {
-        pc_cur->fd_arr[fd].jmp_pointer = &file_file_op;
-        res = pc_cur->fd_arr[fd].jmp_pointer->read(fd, buf, nbytes);
-        pc_cur->fd_arr[fd].file_position += res;
-        return res;
-    }
-    if(filetype == 1){
-        // for(dir_index = 0; dir_index < 63; dir_index++){
-        //     pc_cur->fd_arr[fd].jmp_pointer = &directory_file_op;
-        //     res = pc_cur->fd_arr[fd].jmp_pointer->read(dir_index, buf, nbytes);
-        // }
-        pc_cur->fd_arr[fd].jmp_pointer = &directory_file_op;
-        res = pc_cur->fd_arr[fd].jmp_pointer->read(dir_index, buf, nbytes);
-        dir_index++; //find way to differentiate between direntry and RTC files
-        return res;
-    }
-    else{ //file is rtc
-        pc_cur->fd_arr[fd].jmp_pointer = &rtc_file_op;
-        res = pc_cur->fd_arr[fd].jmp_pointer->read(fd, buf, nbytes);
-        return res;
-    }
-    return 0;
+    
+    return pc_cur->fd_arr[fd].jmp_pointer->read(fd, buf, nbytes);
 }
 
 int32_t sys_write(int32_t fd, const void *buf, int32_t nbytes){
-    init_file_operations();
     int filetype;
     if(fd < 1 || fd > 7) return -1; //invalid fd index
 
-    pcb_t* pc_cur = get_pcb();
-    
-    if(fd == 1){ //write to terminal
-    //TODO: find way to use function pointer instead of this boof method
-        //return stdout(fd, buf, nbytes);
-        pc_cur->fd_arr[fd].jmp_pointer = &stdout_file_op;
-        pc_cur->fd_arr[fd].jmp_pointer->write(fd, buf, nbytes);
+    pcb_t* pc_cur = get_pcb_from_pid(prog_counter - 1);
 
-    } 
-    filetype = get_filetype_from_inode(pc_cur->fd_arr[fd].inode_num);
-    if(filetype != 0){ //we dont write to dir or files
-        return -1;
-    }
-    if(filetype == 0){ //rtc write - this makes no sense
-        //return rtc_write(fd, buf, nbytes); //TODO: change rtc_write return value
-        pc_cur->fd_arr[fd].jmp_pointer = &rtc_file_op;
-        pc_cur->fd_arr[fd].jmp_pointer->write(fd, buf, nbytes);
-    }
-    return nbytes;
+    if(pc_cur->fd_arr[fd].flag == 0) return -1;
+
+    return pc_cur->fd_arr[fd].jmp_pointer->write(fd, buf, nbytes);
 }
 
 int32_t sys_close(int32_t fd){
-    init_file_operations();
     if(fd == 0 || fd == 1){ //cant close stdout or stdin
         return -1;
     }
@@ -331,7 +311,7 @@ int32_t sys_close(int32_t fd){
         return -1;
     }
 
-    pcb_t* pc_cur = get_pcb();
+    pcb_t* pc_cur = get_pcb_from_pid(prog_counter - 1);
 
     if(pc_cur->fd_arr[fd].flag == 1){
         pc_cur->fd_arr[fd].flag = 0;
