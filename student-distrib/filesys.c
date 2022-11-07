@@ -202,13 +202,18 @@ int32_t read_d(int32_t fd, void *buf, int32_t nbytes){
 }
 
 
-
+/* int32_t get_filetype_from_inode(uint32_t inode_num);
+ * Inputs: uint32_t inode_num
+ * Return Value: return filetype, -1 if inode_num DNE
+ * Function: helper function to return filetype of a file given the inode number */
 int32_t get_filetype_from_inode(uint32_t inode_num){
     int i;
+    /*check which direntry pertains to the inode_num passed in */
     for(i = 0; i< 63; i++){
         if(inode_num == origin->direntries[i].inode_num){
+            /*return the filetype*/
             return origin->direntries[i].filetype;
         }
     }
-    return -1;
+    return -1; // inode_num does not exist so return -1
 }
