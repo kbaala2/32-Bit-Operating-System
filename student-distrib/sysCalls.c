@@ -13,6 +13,12 @@
 #define EXEC_BYTE_4 0x46
 #define PROG_IMAGE 0x08048000
 #define PROG_IMAGE_OFFSET 0x8048018
+#define FD_MIN 1
+#define FD_MAX 7
+#define FD_START 2
+#define FD_END 8
+#define STDIN 0
+#define STDOUT 1
 
 uint32_t prog_eip;
 uint8_t buf[4];
@@ -236,9 +242,13 @@ int32_t sys_halt(uint8_t status){
     return 0;
 }
 
+/* int32_t sys_open(const uint8_t* filename)
+ * Inputs: uint8_t filename - filename passed in to find dentry that contains it
+ * Return Value: i - next available fd that is opened, -1 on fail;
+ * Function: sys call to find direntry corresponding to filename, allocates an unused file descriptor, and sets up data for given type of file */
 int32_t sys_open(const uint8_t* filename){
-    int i = 0;
-    dentry_t dentry;
+    int i = 0; // loop idx
+    dentry_t dentry; //local dentry obj
 
     if(filename == NULL){ //check if filename is null
         return -1;
@@ -248,9 +258,10 @@ int32_t sys_open(const uint8_t* filename){
         return -1;
     }
 
-    pcb_t* pc_cur = get_pcb_from_pid(prog_counter - 1);
+    pcb_t* pc_cur = get_pcb_from_pid(prog_counter - 1); // get current pcb
 
-    for(i = 2; i < 8; i++){
+    /* loop through each fd starting from 2 to check if open, then fill in, else return -1 if none open */
+    for(i = FD_START; i < FD_END; i++){
         if(pc_cur->fd_arr[i].flag == 0){
             pc_cur->fd_arr[i].flag = 1; //mark it as in use
             pc_cur->fd_arr[i].inode_num = dentry.inode_num;
@@ -261,17 +272,17 @@ int32_t sys_open(const uint8_t* filename){
                 /* code to say file is rtc, use jmp pointer */
                 pc_cur->fd_arr[i].jmp_pointer = &rtc_file_op;
                 pc_cur->fd_arr[i].jmp_pointer->open(filename);
-                return i;
+                return i; // return the next available fd
             case 1:
                 /* code to say file is dir, use jmp pointer */
                 pc_cur->fd_arr[i].jmp_pointer = &directory_file_op;
                 pc_cur->fd_arr[i].jmp_pointer->open(filename);
-                return i;
+                return i; // return the next available fd
             case 2:
                 /* code to say file is file, use jmp pointer */
                 pc_cur->fd_arr[i].jmp_pointer = &file_file_op;
                 pc_cur->fd_arr[i].jmp_pointer->open(filename);
-                return i;
+                return i; // return the next available fd
             default:
                 return -1;
             }
@@ -280,42 +291,56 @@ int32_t sys_open(const uint8_t* filename){
     return -1; //no file descriptor free
 }
 
+/* int32_t sys_read(int32_t fd, void *buf, int32_t nbytes)
+ * Inputs: uint8_t fd - file descriptor
+           void *buf  - buffer to hold nbytes read
+           int32_t nbytes - number of bytes to be read
+ * Return Value: number of bytes read, -1 on failure;
+ * Function: sys call to read data from the keyboard, a file, device(RTC), or directory */
 int32_t sys_read(int32_t fd, void *buf, int32_t nbytes){
-    int filetype;
-    int32_t res;
-    pcb_t* pc_cur = get_pcb_from_pid(prog_counter - 1);
+    pcb_t* pc_cur = get_pcb_from_pid(prog_counter - 1); //get current pcb
 
-    if(fd < 0 || fd > 7) return -1; //invalid fd index
+    if(fd < 0 || fd > FD_MAX) return -1; //invalid fd index
 
-    if(fd == 1) return -1;
-    
-    return pc_cur->fd_arr[fd].jmp_pointer->read(fd, buf, nbytes);
+    if(fd == STDOUT) return -1; // return -1 for stdout on read
+
+    return pc_cur->fd_arr[fd].jmp_pointer->read(fd, buf, nbytes); //call read 
 }
 
+/* int32_t sys_write(int32_t fd, void *buf, int32_t nbytes)
+ * Inputs: uint8_t fd - file descriptor
+           void *buf  - buffer to hold nbytes written
+           int32_t nbytes - number of bytes to be written
+ * Return Value: number of bytes written, -1 on failure;
+ * Function: sys call to write data to the terminal or to a device(RTC) */
 int32_t sys_write(int32_t fd, const void *buf, int32_t nbytes){
-    int filetype;
-    if(fd < 1 || fd > 7) return -1; //invalid fd index
+    if(fd < FD_MIN || fd > FD_MAX) return -1; //invalid fd index
 
-    pcb_t* pc_cur = get_pcb_from_pid(prog_counter - 1);
+    pcb_t* pc_cur = get_pcb_from_pid(prog_counter - 1); //get current pcb
 
-    if(pc_cur->fd_arr[fd].flag == 0) return -1;
+    if(pc_cur->fd_arr[fd].flag == 0) return -1; // return -1 if fd in use
 
-    return pc_cur->fd_arr[fd].jmp_pointer->write(fd, buf, nbytes);
+    return pc_cur->fd_arr[fd].jmp_pointer->write(fd, buf, nbytes); //call write
 }
 
+/* int32_t sys_close(int32_t fd, void *buf, int32_t nbytes)
+ * Inputs: uint8_t fd - file descriptor
+ * Return Value: 0 for successful close, -1 for failure;
+ * Function: sys call to close the specified file descriptor and make it available for return from later calls to open */
 int32_t sys_close(int32_t fd){
-    if(fd == 0 || fd == 1){ //cant close stdout or stdin
+    if(fd == STDIN || fd == STDOUT){ //cant close stdout or stdin so return -1
         return -1;
     }
-    if(fd < 1 || fd > 7){ //check if fd is within bounds
+    if(fd < FD_MIN || fd > FD_MAX){ //check if fd is within bounds
         return -1;
     }
 
-    pcb_t* pc_cur = get_pcb_from_pid(prog_counter - 1);
+    pcb_t* pc_cur = get_pcb_from_pid(prog_counter - 1); //get current pcb
 
+    /* change fd status from unavailable to available */
     if(pc_cur->fd_arr[fd].flag == 1){
         pc_cur->fd_arr[fd].flag = 0;
         return 0;
     }
-    return -1;
+    return -1; //return -1 if trying to close an fd that that is unallocated
 }
