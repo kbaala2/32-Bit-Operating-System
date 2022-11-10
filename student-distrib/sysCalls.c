@@ -19,6 +19,9 @@
 #define FD_END 8
 #define STDIN 0
 #define STDOUT 1
+#define ARG_MAX 128
+#define VID_MEM 0x000B8000
+#define VID_MEM_SIZE 0x400000
 
 uint32_t prog_eip;
 uint8_t buf[4];
@@ -31,6 +34,7 @@ uint32_t dir_index = 0;
 prog_counter = 0;
 int bad_call();
 extern void ret_to_exec(uint32_t old_ebp, uint32_t old_esp, uint32_t status);
+uint32_t vidmap_buf[1024] __attribute__((aligned(4096)));
 
 /* void map_memory(int pid)
  * Inputs: int pid - program id number of the task currently being handled
@@ -92,6 +96,7 @@ void set_prog_eip(char* filename){
  * Return Value: return value of halt if sys_halt invoked
  * Function: system call that attempts to load and call a new program */
 int32_t sys_execute(const char* cmd){
+    uint8_t arg_buf[ARG_MAX];
     int i = 0;
     int x;
     for(x = 0; x < 64; x++){
@@ -100,6 +105,7 @@ int32_t sys_execute(const char* cmd){
     int j;
     while(cmd[i] != '\n' && cmd[i] != '\0' && cmd[i] != ' '){
         buffer[i] = cmd[i]; //filling the copy buffer with the command name
+        arg_buf[i] = cmd[i];
         i++;
     }
 
@@ -113,6 +119,7 @@ int32_t sys_execute(const char* cmd){
  
     pcb_t* pc;
     pc = get_pcb_from_pid(prog_counter);    //get first available PCB from kernel stack
+    strcpy((int8_t*)pc->args, (int8_t*)arg_buf); //copy the argument buffer into the PCB
         pc->active = 1; //set PCB to active
         if(prog_counter == 0){
             pc->parent_pid = NULL;  //if PCB is the first program, set parent pid to null
@@ -343,4 +350,63 @@ int32_t sys_close(int32_t fd){
         return 0;
     }
     return -1; //return -1 if trying to close an fd that that is unallocated
+}
+
+int32_t getargs(uint8_t* buf, int32_t nbytes){
+    pcb_t* pc_cur = get_pcb_from_pid(prog_counter - 1); //get current pcb
+    int i = 0; //loop idx
+
+    if(buf == NULL) return -1; //check if buf is null
+
+    if(nbytes < 0) return -1; //check if nbytes is negative
+
+    if(nbytes > ARG_MAX) return -1; //check if nbytes is greater than max arg size
+
+    /* copy args into buf */
+    for(i = 0; i < nbytes; i++){
+        buf[i] = pc_cur->args[i];
+    }
+    return 0;
+}
+
+
+int32_t vidmap(uint8_t** screen_start){
+    if(screen_start == NULL) return -1; //check if screen_start is null
+
+    pcb_t* pc_cur = get_pcb_from_pid(prog_counter - 1); //get current pcb
+    uint32_t pid = pc_cur->pid; //get pid
+
+    if((uint32_t)screen_start < VID_MEM || (uint32_t)screen_start >= VID_MEM + VID_MEM_SIZE) return -1; //check if screen_start is within bounds
+
+    page_directory_entry_t temp_pde;
+    page_table_entry_t temp_pte;
+
+    /* set up page directory entry */
+    temp_pde.present = 1;
+    temp_pde.read_write = 1;
+    temp_pde.user_supervisor = 1;
+    temp_pde.write_through = 0;
+    temp_pde.cache_disable = 0;
+    temp_pde.accessed = 0;
+    temp_pde.dirty = 0;
+    temp_pde.page_size = 0;
+    temp_pde.global = 0;
+    temp_pde.available = 0;
+    temp_pde.page_table_base_addr = (uint32_t)vidmap_buf >> 12;
+
+    /* set up page table entry */
+    temp_pte.present = 1;
+    temp_pte.read_write = 1;
+    temp_pte.user_supervisor = 1;
+    temp_pte.write_through = 0;
+    temp_pte.cache_disable = 0;
+    temp_pte.accessed = 0;
+    temp_pte.dirty = 0;
+    temp_pte.page_attribute_table = 0;
+    temp_pte.global = 0;
+    temp_pte.available = 0;
+    
+    /* set up page directory */
+    
+
 }
