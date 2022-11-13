@@ -12,12 +12,16 @@ void map_memory(int pid);
 void init_file_operations();
 
 extern int32_t sys_execute(const char* cmd);
-extern void stdin(int32_t fd, void* buf, int32_t nbytes);
-extern int32_t stdout(int32_t fd, const void* buf, int32_t nbytes);
+extern int32_t sys_halt(uint8_t status);
+// extern void stdin(int32_t fd, void* buf, int32_t nbytes);
+// extern int32_t stdout(int32_t fd, const void* buf, int32_t nbytes);
 extern int32_t sys_open(const uint8_t* filename);
 extern int32_t sys_write(int32_t fd, const void *buf, int32_t nbytes);
 extern int32_t sys_close(int32_t fd);
 extern int32_t sys_read(int32_t fd, void *buf, int32_t nbytes);
+extern int32_t getargs (uint8_t* buf, int32_t nbytes);
+extern int32_t vidmap (uint8_t** screen_start);
+
 
 typedef struct file_operations_table {
     int32_t (*open)(const uint8_t* filename);
@@ -46,10 +50,12 @@ typedef struct __attribute__ ((packed)) pcb {
     uint32_t saved_esp;
     uint32_t saved_ebp;
     int active;
+    uint8_t args[128];
     file_descriptor_t fd_arr[8];
 } pcb_t;
 
-pcb_t* create_pcb(int pid);
+pcb_t* get_pcb_from_pid(int pid);
 pcb_t* get_pcb();
+extern int prog_counter;
 
 #endif /* _SYSCALLS_H */

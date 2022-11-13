@@ -138,7 +138,11 @@ int32_t close_f(int32_t fd){
  * Return Value: -1 if not found, 0 if found
  * Function: reads file */
 int32_t read_f(int32_t fd, void *buf, int32_t nbytes){
-    return read_data(fd,0, buf, nbytes); //read file data in read file function
+    pcb_t* cur_pcb = get_pcb_from_pid(prog_counter - 1);
+    uint32_t bread = read_data(cur_pcb->fd_arr[fd].inode_num, cur_pcb->fd_arr[fd].file_position, buf, nbytes); //read file data in read file function
+    cur_pcb->fd_arr[fd].file_position += bread;
+    return bread;
+    //return read_data(fd,0, buf, nbytes);
 }
 
 /* int32_t open_d(const uint8_t* filename);
@@ -178,30 +182,38 @@ int32_t close_d(int32_t fd){
 int32_t read_d(int32_t fd, void *buf, int32_t nbytes){
     if(buf == NULL) return -1;         // null check
     int j = 0;
+    pcb_t* cur_pcb = get_pcb_from_pid(prog_counter - 1);
+    uint32_t file_to_read = cur_pcb->fd_arr[fd].file_position++;
 
     /*loop to check how many bytes is contained in the filename*/
-    if(fd < 63){
+    if(file_to_read < 63){
+        if(!strncmp("\0", origin->direntries[file_to_read].filename, sizeof(origin->direntries[file_to_read].filename))) return 0;
         for(j =0; j < 32; j++){
-            if(origin->direntries[fd].filename[j] == NULL){
+            if(origin->direntries[file_to_read].filename[j] == '\0'){
                 nbytes = j;
                 break;
             }
         }
-        memcpy(buf, origin->direntries[fd].filename, sizeof(origin->direntries[fd].filename)); //copy filename to buffer
-        return 1;
+        memcpy(buf, origin->direntries[file_to_read].filename, sizeof(origin->direntries[file_to_read].filename)); //copy filename to buffer
+        return nbytes;
     }
 
     return 0;
 }
 
 
-
+/* int32_t get_filetype_from_inode(uint32_t inode_num);
+ * Inputs: uint32_t inode_num
+ * Return Value: return filetype, -1 if inode_num DNE
+ * Function: helper function to return filetype of a file given the inode number */
 int32_t get_filetype_from_inode(uint32_t inode_num){
     int i;
+    /*check which direntry pertains to the inode_num passed in */
     for(i = 0; i< 63; i++){
         if(inode_num == origin->direntries[i].inode_num){
+            /*return the filetype*/
             return origin->direntries[i].filetype;
         }
     }
-    return -1;
+    return -1; // inode_num does not exist so return -1
 }
