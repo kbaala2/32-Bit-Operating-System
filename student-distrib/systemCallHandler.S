@@ -14,6 +14,7 @@ sys_call_table: #jump table holding the system calls
     .long sys_write
     .long sys_open
     .long sys_close
+    .long getargs
 
 .align 4
 sys_call_handler:

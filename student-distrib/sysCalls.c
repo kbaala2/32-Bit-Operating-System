@@ -13,6 +13,7 @@
 #define EXEC_BYTE_4 0x46
 #define PROG_IMAGE 0x08048000
 #define PROG_IMAGE_OFFSET 0x8048018
+#define ARG_MAX 128
 #define FD_MIN 1
 #define FD_MAX 7
 #define FD_START 2
@@ -22,6 +23,8 @@
 
 uint32_t prog_eip;
 uint8_t buf[4];
+int tasks[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+int task_avail;
 uint32_t eflag_bitmask = 0x200; //masks everything other than the IF bit
 uint32_t stack_pointer = END_OF_VIRTUAL - sizeof(int32_t);
 char buffer[64];    //buffer to transfer command into
@@ -93,9 +96,13 @@ void set_prog_eip(char* filename){
  * Function: system call that attempts to load and call a new program */
 int32_t sys_execute(const char* cmd){
     int i = 0;
+    int z = 0;
+    int c;
     int x;
-    for(x = 0; x < 64; x++){
+    uint8_t arg_buf[ARG_MAX];
+    for(x = 0; x < 32; x++){
         buffer[x] = '\0';   //clearing the copy buffer
+        arg_buf[x] = '\0';
     }
     int j;
     while(cmd[i] != '\n' && cmd[i] != '\0' && cmd[i] != ' '){
@@ -103,19 +110,40 @@ int32_t sys_execute(const char* cmd){
         i++;
     }
 
+    i++;
+    while(cmd[i] != '\n' && cmd[i] != '\0' && cmd[i] != ' ') {
+        arg_buf[z] = cmd[i];
+        z++;
+        i++;
+    }
+
     if(!check_executable(buffer)) { //check if command is executable file
         return -1;
     }
 
+    task_avail = 0;
+    for(c = 0; c < 8; c++) {
+        if(!tasks[c]) {
+            tasks[c] = 1;
+           // prog_counter = c;
+            task_avail = 1;
+            break;
+        }
+    }
+    if(!task_avail) {
+        return -1;
+    }
     map_memory(prog_counter);   //map virtual to physical memory for new program
 
     set_prog_eip(buffer);   //find program's eip for iret
  
     pcb_t* pc;
     pc = get_pcb_from_pid(prog_counter);    //get first available PCB from kernel stack
+    strcpy((int8_t*)pc->args, (int8_t*)arg_buf);
         pc->active = 1; //set PCB to active
         if(prog_counter == 0){
-            pc->parent_pid = NULL;  //if PCB is the first program, set parent pid to null
+           // pc->parent_pid = NULL;  //if PCB is the first program, set parent pid to null
+            pc->parent_pid = 0;
         }
         else{
             pc->parent_pid = prog_counter - 1;  //otherwise make parent pid one less than current pid
@@ -222,25 +250,64 @@ int32_t sys_halt(uint8_t status){
     int i;
     pcb_t* cur_pcb = get_pcb_from_pid(prog_counter - 1); //gets the current program's PCB
     pcb_t* parent_pcb;
+     //prog_counter--; //decrement program counter
+    if(status == 15) {
+        status = 256;
+    }
+    else {
+        status = 0;
+    }
     if(prog_counter == 1){  //if current program is the first running one (shell)
         prog_counter--; //decrement program counter
         clear();
         clear_pos();
-        sys_execute("shell");   //start new shell
+        tasks[prog_counter] = 0;
+        parent_pcb = get_pcb_from_pid(0);
+        sys_execute((uint8_t*)"shell");   //start new shell
     }
     else{
+        prog_counter--;
+        tasks[prog_counter] = 0;
         parent_pcb = get_pcb_from_pid(cur_pcb->parent_pid);    //gets the current program's parent's PCB
     }
-    prog_counter--; //decrement program counter
+
+
+   
     map_memory(parent_pcb->pid);    //re-maps virtual to physical memory for original program
     for(i = 0; i < 8; i++){
         cur_pcb->fd_arr[i].flag = 0;    //set all file operation flags to low
     }
     tss.ss0 = KERNEL_DS;    //set TSS ss0 to kernel data segment
     tss.esp0 = START_OF_USER - ((parent_pcb->pid) * KERNEL_STACK_SIZE) - sizeof(int32_t);   //sets the TSS esp0 to the kernel stack pointer
-    ret_to_exec(cur_pcb->saved_ebp, cur_pcb->saved_esp, status);    //call asm linkage function for returning the execute sys call
+    ret_to_exec(cur_pcb->saved_ebp, cur_pcb->saved_esp, status);    //call asm linkage function for returning the execute sys call 
     return 0;
 }
+
+int32_t getargs(uint8_t* arguments_buf, int32_t nbytes){
+    pcb_t* pc_cur = get_pcb_from_pid(prog_counter - 1); //get current pcb
+    int i = 0; //loop idx
+
+    if(arguments_buf == NULL) return -1; //check if buf is null
+
+    if(nbytes < 0) return -1; //check if nbytes is negative
+
+    if(nbytes > 1024) return -1; //check if nbytes is greater than max arg size
+
+    /* copy args into buf */
+    // strncpy((int8_t*)buf,(int8_t*)pc_cur->args, nbytes);
+    for(i = 0; i < nbytes; i++){
+     
+        if(pc_cur->args[i] == NULL) {
+            break;
+        } 
+        //putc(pc_cur->args[i]);
+        arguments_buf[i] = pc_cur->args[i];
+    }
+    return 0;
+}
+
+
+
 
 /* int32_t sys_open(const uint8_t* filename)
  * Inputs: uint8_t filename - filename passed in to find dentry that contains it
