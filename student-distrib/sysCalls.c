@@ -13,18 +13,21 @@
 #define EXEC_BYTE_4 0x46
 #define PROG_IMAGE 0x08048000
 #define PROG_IMAGE_OFFSET 0x8048018
+#define ARG_MAX 128
 #define FD_MIN 1
 #define FD_MAX 7
 #define FD_START 2
 #define FD_END 8
 #define STDIN 0
 #define STDOUT 1
-#define ARG_MAX 128
-#define VID_MEM 0x000B8000
-#define VID_MEM_SIZE 0x400000
+#define _128MB 0x8000000
+#define _132MB 0x8400000
+#define _136MB 0x8800000
 
 uint32_t prog_eip;
 uint8_t buf[4];
+int tasks[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+int task_avail;
 uint32_t eflag_bitmask = 0x200; //masks everything other than the IF bit
 uint32_t stack_pointer = END_OF_VIRTUAL - sizeof(int32_t);
 char buffer[64];    //buffer to transfer command into
@@ -34,7 +37,6 @@ uint32_t dir_index = 0;
 prog_counter = 0;
 int bad_call();
 extern void ret_to_exec(uint32_t old_ebp, uint32_t old_esp, uint32_t status);
-uint32_t vidmap_buf[1024] __attribute__((aligned(4096)));
 
 /* void map_memory(int pid)
  * Inputs: int pid - program id number of the task currently being handled
@@ -96,16 +98,32 @@ void set_prog_eip(char* filename){
  * Return Value: return value of halt if sys_halt invoked
  * Function: system call that attempts to load and call a new program */
 int32_t sys_execute(const char* cmd){
-    uint8_t arg_buf[ARG_MAX];
     int i = 0;
+    int z = 0;
+    int y = 0;
+    int c;
     int x;
-    for(x = 0; x < 64; x++){
+    uint8_t arg_buf[ARG_MAX];
+    for(x = 0; x < 33; x++){
         buffer[x] = '\0';   //clearing the copy buffer
+        arg_buf[x] = '\0';
     }
     int j;
+    while(cmd[i] == '\n' || cmd[i] == '\0' || cmd[i] == ' '){
+        i++;
+    } 
     while(cmd[i] != '\n' && cmd[i] != '\0' && cmd[i] != ' '){
-        buffer[i] = cmd[i]; //filling the copy buffer with the command name
-        arg_buf[i] = cmd[i];
+        buffer[y] = cmd[i]; //filling the copy buffer with the command name
+        y++;
+        i++;
+    }
+
+    while(cmd[i] == '\n' || cmd[i] == '\0' || cmd[i] == ' '){
+        i++;
+    } 
+    while(cmd[i] != '\n' && cmd[i] != '\0' && cmd[i] != ' ') {
+        arg_buf[z] = cmd[i];
+        z++;
         i++;
     }
 
@@ -113,16 +131,29 @@ int32_t sys_execute(const char* cmd){
         return -1;
     }
 
+    task_avail = 0;
+    for(c = 0; c < 8; c++) {
+        if(!tasks[c]) {
+            tasks[c] = 1;
+           // prog_counter = c;
+            task_avail = 1;
+            break;
+        }
+    }
+    if(!task_avail) {
+        return -1;
+    }
     map_memory(prog_counter);   //map virtual to physical memory for new program
 
     set_prog_eip(buffer);   //find program's eip for iret
  
     pcb_t* pc;
     pc = get_pcb_from_pid(prog_counter);    //get first available PCB from kernel stack
-    strcpy((int8_t*)pc->args, (int8_t*)arg_buf); //copy the argument buffer into the PCB
+    strcpy((int8_t*)pc->args, (int8_t*)arg_buf);
         pc->active = 1; //set PCB to active
         if(prog_counter == 0){
-            pc->parent_pid = NULL;  //if PCB is the first program, set parent pid to null
+           // pc->parent_pid = NULL;  //if PCB is the first program, set parent pid to null
+            pc->parent_pid = 0;
         }
         else{
             pc->parent_pid = prog_counter - 1;  //otherwise make parent pid one less than current pid
@@ -229,24 +260,88 @@ int32_t sys_halt(uint8_t status){
     int i;
     pcb_t* cur_pcb = get_pcb_from_pid(prog_counter - 1); //gets the current program's PCB
     pcb_t* parent_pcb;
+     //prog_counter--; //decrement program counter
+    if(status == 15) {
+        status = 256;
+    }
+    else {
+        status = 0;
+    }
     if(prog_counter == 1){  //if current program is the first running one (shell)
         prog_counter--; //decrement program counter
         clear();
         clear_pos();
-        sys_execute("shell");   //start new shell
+        tasks[prog_counter] = 0;
+        parent_pcb = get_pcb_from_pid(0);
+        sys_execute((uint8_t*)"shell");   //start new shell
     }
     else{
+        prog_counter--;
+        tasks[prog_counter] = 0;
         parent_pcb = get_pcb_from_pid(cur_pcb->parent_pid);    //gets the current program's parent's PCB
     }
-    prog_counter--; //decrement program counter
+
+
+   
     map_memory(parent_pcb->pid);    //re-maps virtual to physical memory for original program
-    for(i = 0; i < 8; i++){
+    for(i = 2; i < 8; i++){
         cur_pcb->fd_arr[i].flag = 0;    //set all file operation flags to low
     }
     tss.ss0 = KERNEL_DS;    //set TSS ss0 to kernel data segment
     tss.esp0 = START_OF_USER - ((parent_pcb->pid) * KERNEL_STACK_SIZE) - sizeof(int32_t);   //sets the TSS esp0 to the kernel stack pointer
-    ret_to_exec(cur_pcb->saved_ebp, cur_pcb->saved_esp, status);    //call asm linkage function for returning the execute sys call
+    ret_to_exec(cur_pcb->saved_ebp, cur_pcb->saved_esp, status);    //call asm linkage function for returning the execute sys call 
+    // asm volatile("          \n\
+    //         movl $0, %%ebp  \n\
+    //         movl $1, %%esp  \n\
+    //         movl $2, %%eax  \n\
+    //         leave           \n\
+    //         ret             \n\
+    //     "
+    //     :
+    //     :"r"(cur_pcb->saved_ebp), "r"(cur_pcb->saved_esp), "r"(status)
+    //     : "cc", "%eax", "%esp", "%ebp"
+    // );
     return 0;
+}
+
+/* int32_t getargs(uint8_t* arguments_buf, int32_t nbytes)
+ * Inputs: uint8_t arguments_buf, int32_t nbytes
+ * Return Value: 0 on success, -1 on failure
+ * Function: sys call to parse arguments passed in from cat command */
+int32_t getargs(uint8_t* arguments_buf, int32_t nbytes){
+    cli();
+    pcb_t* pc_cur = get_pcb_from_pid(prog_counter - 1); //get current pcb
+
+    int i = 0; //loop idx
+
+    if(arguments_buf == NULL) return -1; //check if buf is null
+
+    if(nbytes < 0) return -1; //check if nbytes is negative
+
+    if(nbytes > 1024) return -1; //check if nbytes is greater than max arg size
+
+    memcpy(arguments_buf, pc_cur->args, sizeof(pc_cur->args)); /* copy args into buf */
+
+    sti();
+
+    return 0;
+}
+
+/* int32_t vidmap(uint8_t** screen_start)
+ * Inputs: uint8_t** screen_start
+ * Return Value: 0
+ * Function: maps the text-mode video memory into the user space at a pre-defined virtual address */
+int32_t vidmap (uint8_t** screen_start) {
+    if(screen_start == NULL) return -1; //check if screen_start is null
+
+    if((uint32_t)screen_start < _128MB || (uint32_t)screen_start > _132MB) return -1; //check if screen_start is within bounds
+
+    set_up_vidmap(); //helper function to set up video page
+    flush_tlb();
+
+    *screen_start = (uint32_t *)(_136MB); //sets the screen start address to be at 136 MB 
+     
+     return 0;
 }
 
 /* int32_t sys_open(const uint8_t* filename)
@@ -310,7 +405,7 @@ int32_t sys_read(int32_t fd, void *buf, int32_t nbytes){
     if(fd < 0 || fd > FD_MAX) return -1; //invalid fd index
 
     if(fd == STDOUT) return -1; // return -1 for stdout on read
-
+    //if(pc_cur->fd_arr[fd])
     return pc_cur->fd_arr[fd].jmp_pointer->read(fd, buf, nbytes); //call read 
 }
 
@@ -325,7 +420,8 @@ int32_t sys_write(int32_t fd, const void *buf, int32_t nbytes){
 
     pcb_t* pc_cur = get_pcb_from_pid(prog_counter - 1); //get current pcb
 
-    if(pc_cur->fd_arr[fd].flag == 0) return -1; // return -1 if fd in use
+    //if(pc_cur->fd_arr[fd].flag == 0) return -1; // return -1 if fd in use
+    if(fd == STDIN) return -1;
 
     return pc_cur->fd_arr[fd].jmp_pointer->write(fd, buf, nbytes); //call write
 }
@@ -352,61 +448,3 @@ int32_t sys_close(int32_t fd){
     return -1; //return -1 if trying to close an fd that that is unallocated
 }
 
-int32_t getargs(uint8_t* buf, int32_t nbytes){
-    pcb_t* pc_cur = get_pcb_from_pid(prog_counter - 1); //get current pcb
-    int i = 0; //loop idx
-
-    if(buf == NULL) return -1; //check if buf is null
-
-    if(nbytes < 0) return -1; //check if nbytes is negative
-
-    if(nbytes > ARG_MAX) return -1; //check if nbytes is greater than max arg size
-
-    /* copy args into buf */
-    for(i = 0; i < nbytes; i++){
-        buf[i] = pc_cur->args[i];
-    }
-    return 0;
-}
-
-
-int32_t vidmap(uint8_t** screen_start){
-    if(screen_start == NULL) return -1; //check if screen_start is null
-
-    pcb_t* pc_cur = get_pcb_from_pid(prog_counter - 1); //get current pcb
-    uint32_t pid = pc_cur->pid; //get pid
-
-    if((uint32_t)screen_start < VID_MEM || (uint32_t)screen_start >= VID_MEM + VID_MEM_SIZE) return -1; //check if screen_start is within bounds
-
-    page_directory_entry_t temp_pde;
-    page_table_entry_t temp_pte;
-
-    /* set up page directory entry */
-    temp_pde.present = 1;
-    temp_pde.read_write = 1;
-    temp_pde.user_supervisor = 1;
-    temp_pde.write_through = 0;
-    temp_pde.cache_disable = 0;
-    temp_pde.accessed = 0;
-    temp_pde.dirty = 0;
-    temp_pde.page_size = 0;
-    temp_pde.global = 0;
-    temp_pde.available = 0;
-    temp_pde.page_table_base_addr = (uint32_t)vidmap_buf >> 12;
-
-    /* set up page table entry */
-    temp_pte.present = 1;
-    temp_pte.read_write = 1;
-    temp_pte.user_supervisor = 1;
-    temp_pte.write_through = 0;
-    temp_pte.cache_disable = 0;
-    temp_pte.accessed = 0;
-    temp_pte.dirty = 0;
-    temp_pte.page_attribute_table = 0;
-    temp_pte.global = 0;
-    temp_pte.available = 0;
-    
-    /* set up page directory */
-    
-
-}

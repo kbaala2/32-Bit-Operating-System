@@ -55,6 +55,9 @@ int32_t terminal_write (int32_t fd, const void* buf, int32_t nbytes){
     char* result = (char*)buf;
     int i = 0;
     for(i = 0; i < nbytes; i++){    //loop through each character in the buffer and output to screen
+        if(result[i] == '\0') {
+            continue;
+        }
         putc(result[i]);
     }
     sti();  //enable interrupts
