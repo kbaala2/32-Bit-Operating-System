@@ -58,6 +58,14 @@ int div_zero_test(){
 	return FAIL;
 }
 
+int vidmap_test(){
+	TEST_HEADER;
+	int j;
+	int i = 1;
+	j = i/0;
+	return FAIL;
+}
+
 int paging_test(){
 	TEST_HEADER;
 	int c;
@@ -188,22 +196,22 @@ int cat_exec_test(uint8_t* filename){
 	return PASS;	
 }
 
-int list_dir(){
-	TEST_HEADER;
-	char buf[1000];
-	int i;
-	int ret;
-	clear();
-	clear_pos();
-	for(i = 0; i < 62; i++){
-		ret = read_d(i, buf, 32);
-		if(ret == 0) break;
-		if(ret == -1) return FAIL;
-		printf(buf);
-		printf("\n");
-	}
-	return PASS;
-}
+// int list_dir(){
+// 	TEST_HEADER;
+// 	char buf[1000];
+// 	int i;
+// 	int ret;
+// 	clear();
+// 	clear_pos();
+// 	for(i = 0; i < 62; i++){
+// 		ret = read_d(i, buf, 32);
+// 		if(ret == 0) break;
+// 		if(ret == -1) return FAIL;
+// 		printf(buf);
+// 		printf("\n");
+// 	}
+// 	return PASS;
+// }
 /* Checkpoint 3 tests */
 
 int sys_call_test(){
@@ -237,8 +245,8 @@ void launch_tests(){
 	//TEST_OUTPUT("page test 2", paging_test_2());
 	//TEST_OUTPUT("div_zero_test", div_zero_test());
 	// TEST_OUTPUT("file system cat test", cat_test("frame1.txt"));
-	//TEST_OUTPUT("list dir test", list_dir());
-	//TEST_OUTPUT("term", test_terminal());
+	// TEST_OUTPUT("list dir test", list_dir());
+	// //TEST_OUTPUT("term", test_terminal());
 	//TEST_OUTPUT("rtc", test_rtc());
 	//TEST_OUTPUT("sys call test", sys_call_test());
 	while(1);

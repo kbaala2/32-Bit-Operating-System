@@ -1,7 +1,7 @@
 #include "sysCalls.h"
 #include "x86_desc.h"
-#include "filesys.h"
 #include "lib.h"
+#include "filesys.h"
 
 #define START_OF_USER   0x800000
 #define START_OF_KERNEL 0x400000
@@ -31,9 +31,10 @@ char buffer[64];    //buffer to transfer command into
 extern void flush_tlb();
 extern void goto_user(uint32_t SS, uint32_t ESP, uint32_t eflag_bitmask, uint32_t CS, uint32_t EIP);
 uint32_t dir_index = 0;
-prog_counter = 0;
+int prog_counter = 0;
 int bad_call();
 extern void ret_to_exec(uint32_t old_ebp, uint32_t old_esp, uint32_t status);
+void set_up_vidmap();
 
 /* void map_memory(int pid)
  * Inputs: int pid - program id number of the task currently being handled
@@ -53,7 +54,6 @@ void map_memory(int pid){
  * Function: helper function that checks if the given file is an executable file */
 int check_executable(char* filename){
     dentry_t dentry;
-
     if(open_f((const uint8_t*)filename) == -1){ //returns 0 if file can't be opened
 		return 0;
 	}
@@ -258,19 +258,19 @@ int32_t sys_halt(uint8_t status){
     pcb_t* cur_pcb = get_pcb_from_pid(prog_counter - 1); //gets the current program's PCB
     pcb_t* parent_pcb;
      //prog_counter--; //decrement program counter
-    if(status == 15) {
-        status = 256;
-    }
-    else {
-        status = 0;
-    }
+    // if(status == 15) {
+    //     status = 256;
+    // }
+    // else {
+    //     status = 0;
+    // }
     if(prog_counter == 1){  //if current program is the first running one (shell)
         prog_counter--; //decrement program counter
         clear();
         clear_pos();
         tasks[prog_counter] = 0;
         parent_pcb = get_pcb_from_pid(0);
-        sys_execute((uint8_t*)"shell");   //start new shell
+        sys_execute("shell");   //start new shell
     }
     else{
         prog_counter--;
@@ -278,33 +278,27 @@ int32_t sys_halt(uint8_t status){
         parent_pcb = get_pcb_from_pid(cur_pcb->parent_pid);    //gets the current program's parent's PCB
     }
 
-
-   
     map_memory(parent_pcb->pid);    //re-maps virtual to physical memory for original program
-    for(i = 2; i < 8; i++){
+    for(i = 0; i < 8; i++){
+        if(cur_pcb->fd_arr[i].flag == 1){
+            sys_close(i);
+        }
+        cur_pcb->fd_arr[i].jmp_pointer = &bad_file_op;
         cur_pcb->fd_arr[i].flag = 0;    //set all file operation flags to low
     }
     tss.ss0 = KERNEL_DS;    //set TSS ss0 to kernel data segment
     tss.esp0 = START_OF_USER - ((parent_pcb->pid) * KERNEL_STACK_SIZE) - sizeof(int32_t);   //sets the TSS esp0 to the kernel stack pointer
     ret_to_exec(cur_pcb->saved_ebp, cur_pcb->saved_esp, status);    //call asm linkage function for returning the execute sys call 
-    // asm volatile("          \n\
-    //         movl $0, %%ebp  \n\
-    //         movl $1, %%esp  \n\
-    //         movl $2, %%eax  \n\
-    //         leave           \n\
-    //         ret             \n\
-    //     "
-    //     :
-    //     :"r"(cur_pcb->saved_ebp), "r"(cur_pcb->saved_esp), "r"(status)
-    //     : "cc", "%eax", "%esp", "%ebp"
-    // );
     return 0;
 }
 
+/* int32_t getargs(uint8_t* arguments_buf, int32_t nbytes)
+ * Inputs: uint8_t arguments_buf, int32_t nbytes
+ * Return Value: 0 on success, -1 on failure
+ * Function: sys call to parse arguments passed in from cat command */
 int32_t getargs(uint8_t* arguments_buf, int32_t nbytes){
     cli();
     pcb_t* pc_cur = get_pcb_from_pid(prog_counter - 1); //get current pcb
-    int i = 0; //loop idx
 
     if(arguments_buf == NULL) return -1; //check if buf is null
 
@@ -315,19 +309,14 @@ int32_t getargs(uint8_t* arguments_buf, int32_t nbytes){
     /* copy args into buf */
     // strncpy((int8_t*)buf,(int8_t*)pc_cur->args, nbytes);
     memcpy(arguments_buf, pc_cur->args, sizeof(pc_cur->args));
-    // for(i = 0; i < nbytes; i++){
-     
-    //     // if(pc_cur->args[i] == NULL) {
-    //     //     break;
-    //     // } 
-    //     // putc(pc_cur->args[i]);
-    //     arguments_buf[i] = pc_cur->args[i];
-    // }
     sti();
     return 0;
 }
 
-
+/* int32_t vidmap(uint8_t** screen_start)
+ * Inputs: uint8_t** screen_start
+ * Return Value: 0
+ * Function: maps the text-mode video memory into the user space at a pre-defined virtual address */
 int32_t vidmap (uint8_t** screen_start) {
     if(screen_start == NULL) return -1; //check if screen_start is null
 
@@ -441,9 +430,12 @@ int32_t sys_close(int32_t fd){
     pcb_t* pc_cur = get_pcb_from_pid(prog_counter - 1); //get current pcb
 
     /* change fd status from unavailable to available */
-    if(pc_cur->fd_arr[fd].flag == 1){
-        pc_cur->fd_arr[fd].flag = 0;
-        return 0;
+    if(pc_cur->fd_arr[fd].flag == 0){
+        return -1;
     }
-    return -1; //return -1 if trying to close an fd that that is unallocated
+    pc_cur->fd_arr[fd].flag = 0;
+    if(0 != pc_cur->fd_arr[fd].jmp_pointer->close(fd)){
+        return -1;
+    }
+    return 0; //return -1 if trying to close an fd that that is unallocated
 }

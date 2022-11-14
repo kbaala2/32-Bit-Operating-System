@@ -108,12 +108,18 @@ void page_init(){
     enablePaging();
 }
 
+/* void set_up_vidmap()
+ * Inputs: None
+ * Return Value: None
+ * Function: Helper function to be used in vidmap to set up the vidmap paging */
 void set_up_vidmap(){
+    /*set up pde at 136 MB*/
     pde[VIDEO_DIR_INDEX].present = 1;
     pde[VIDEO_DIR_INDEX].page_size = 0;
     pde[VIDEO_DIR_INDEX].user_supervisor = 1;
     pde[VIDEO_DIR_INDEX].page_table_base_addr = ((uint32_t)pte_vidmap) >> 12; //shift from 32 bits to 20 bits
 
+    /*set up a page of the vidmap page table*/
     pte_vidmap[0].present = 1;
     pte_vidmap[0].user_supervisor = 1;
     pte_vidmap[0].page_base_addr = VIDEO >> 12;

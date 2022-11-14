@@ -1,12 +1,12 @@
-#include "filesys.h"
 #include "sysCalls.h"
 #include "lib.h"
+#include "filesys.h"
 
 boot_block_t *origin;
 data_block_t *first_data_block; 
-inode_t *root_inode;
 dentry_t* dentry_obj;
 uint32_t inode_num;
+inode_t *root_inode;
 
 
 /* int32_t file_init(boot_block_t *boot);
@@ -70,26 +70,32 @@ int32_t read_dentry_by_name (const uint8_t* fname, dentry_t* dentry){
  * Return Value: -1 if not found, 0 if found
  * Function: reads data */
 int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t length){
-    inode_t* inode_ptr;
-    data_block_t* data_blocks;
-    data_block_t* data_block;
+    inode_t* inode_ptr;         //ptr for inode
+    data_block_t* data_blocks;  //array of data blocks
+    data_block_t* data_block;   // pointer to a data block
     uint32_t db_offset, i, block_len;
 
+    /*check if the inode passed in is within bounds*/
     if(inode >= origin->inode_count){
         return -1;
     }
     inode_ptr = get_inode(inode);
-    block_len = (inode_ptr->length / 4096) + 1;
-    db_offset = offset / 4096;
+    block_len = (inode_ptr->length / 4096) + 1; //number of data blocks for the inode
+    db_offset = offset / 4096; //get offset to data block
+
+    /*check to make sure the offset is not out of bounds of the # of data blocks*/
     if(db_offset >= block_len){
         return -1;
     }
-    offset %= 4096;
-    data_blocks = (data_block_t*)((origin->inode_count * sizeof(inode_t)) + (uint8_t*)get_inode(0));;
-    data_block = &data_blocks[inode_ptr->data_block_num[db_offset]];
+
+    
+    offset %= 4096; //get offset inside data block
+    data_blocks = (data_block_t*)((origin->inode_count * sizeof(inode_t)) + (uint8_t*)get_inode(0)); // pointer to data blocks for the inode
+    data_block = &data_blocks[inode_ptr->data_block_num[db_offset]];  //pointer to the specified data block that we are starting to get data from
     if(inode_ptr->data_block_num[db_offset] >= origin->data_count){
         return -1;
     }
+    /*loop through the length of the file(size) and read*/
     for(i = 0; i < length; i++){
         buf[i] = data_block->data[(i+offset) % 4096];
         if((i+offset+1) % 4096 == 0){
@@ -97,18 +103,22 @@ int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t lengt
             if(db_offset == block_len){
                 return i;
             }
+            /*bounds checks*/
             else if(db_offset > block_len){
                 return -1;
             }
+            /*bounds checks*/
             if(inode_ptr->data_block_num[db_offset] >= origin->data_count){
                 return -1;
             }
+            /*reset data block pointer with new db offset*/
             data_block = &data_blocks[inode_ptr->data_block_num[db_offset]];
             offset = 0;
         }
     }
     return i;
-}    
+} 
+
 
 inode_t* get_inode(uint32_t inode){
     return (inode_t*)((inode * sizeof(inode_t)) + ((uint8_t*)origin + 4096));
