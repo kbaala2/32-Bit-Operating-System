@@ -1,12 +1,12 @@
-#include "filesys.h"
 #include "sysCalls.h"
 #include "lib.h"
+#include "filesys.h"
 
 boot_block_t *origin;
 data_block_t *first_data_block; 
-inode_t *root_inode;
 dentry_t* dentry_obj;
 uint32_t inode_num;
+inode_t *root_inode;
 
 
 /* int32_t file_init(boot_block_t *boot);
@@ -17,7 +17,7 @@ int32_t file_init(boot_block_t *boot){
     origin = boot;                                              // ptr to boot block
     root_inode = (inode_t*)(origin + 1);                                  // ptr to first inode
     inode_num = origin->inode_count;                            // holds total number of inodes 
-    dentry_obj = &(origin->direntries[2]);                      // ptr to 2nd dentry    
+    dentry_obj = &(origin->direntries[1]);                      // ptr to 2nd dentry    
     first_data_block = (data_block_t*)(origin + inode_num + 1); //contains ptr to the first data block
     return 0;
 }
@@ -45,10 +45,11 @@ int32_t read_dentry_by_name (const uint8_t* fname, dentry_t* dentry){
 
     /* go through each dentry to check if the filename exists in the dentry, then copy to dentry object and return*/
     for(idx = 0; idx < ENTRY_NUM; idx++){
-        if(strncmp((int8_t*)origin->direntries[idx].filename,(int8_t*)fname, 32) == 0){ 
+        if(strncmp((int8_t*)origin->direntries[idx].filename, (int8_t*)fname, 32) == 0){ 
             return read_dentry_by_index(idx, dentry);
         }
     }
+    
     
     return -1; //return -1 when file name does not exist
 }
@@ -105,7 +106,8 @@ int32_t read_data (uint32_t inode, uint32_t offset, uint8_t* buf, uint32_t lengt
         }
     }
     return i;
-}    
+} 
+
 
 /* inode_t* get_inode(uint32_t inode)
  * Inputs: uint32_t inode
@@ -199,9 +201,10 @@ int32_t read_d(int32_t fd, void *buf, int32_t nbytes){
     pcb_t* cur_pcb = get_pcb_from_pid(prog_counter - 1);
     uint32_t file_to_read = cur_pcb->fd_arr[fd].file_position++;
 
-    /*loop to check how many bytes is contained in the filename*/
+    
     if(file_to_read < 63){
         if(!strncmp("\0", origin->direntries[file_to_read].filename, sizeof(origin->direntries[file_to_read].filename))) return 0;
+        /*loop to check how many bytes is contained in the filename*/
         for(j =0; j < 32; j++){
             if(origin->direntries[file_to_read].filename[j] == '\0'){
                 nbytes = j;

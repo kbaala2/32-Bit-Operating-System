@@ -63,9 +63,9 @@ int rtc_open(const uint8_t* filename){
 int rtc_read(int32_t fd, void *buf, int32_t nbytes){
     BLOCK_FLAG = 0;
     while(!BLOCK_FLAG);
-    BLOCK_FLAG = 0;
-    outb(0x0C, 0x70);	// select register C
-    inb(0x71);		// just throw away contents
+    BLOCK_FLAG = 1;
+    //outb(0x0C, 0x70);	// select register C
+    //inb(0x71);		// just throw away contents
     return 0; 
 }
 

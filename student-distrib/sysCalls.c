@@ -1,7 +1,7 @@
 #include "sysCalls.h"
 #include "x86_desc.h"
-#include "filesys.h"
 #include "lib.h"
+#include "filesys.h"
 
 #define START_OF_USER   0x800000
 #define START_OF_KERNEL 0x400000
@@ -26,7 +26,7 @@
 
 uint32_t prog_eip;
 uint8_t buf[4];
-int tasks[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+int tasks[6] = {0, 0, 0, 0, 0, 0};
 int task_avail;
 uint32_t eflag_bitmask = 0x200; //masks everything other than the IF bit
 uint32_t stack_pointer = END_OF_VIRTUAL - sizeof(int32_t);
@@ -34,9 +34,10 @@ char buffer[64];    //buffer to transfer command into
 extern void flush_tlb();
 extern void goto_user(uint32_t SS, uint32_t ESP, uint32_t eflag_bitmask, uint32_t CS, uint32_t EIP);
 uint32_t dir_index = 0;
-prog_counter = 0;
+int prog_counter = 0;
 int bad_call();
 extern void ret_to_exec(uint32_t old_ebp, uint32_t old_esp, uint32_t status);
+void set_up_vidmap();
 
 /* void map_memory(int pid)
  * Inputs: int pid - program id number of the task currently being handled
@@ -56,7 +57,6 @@ void map_memory(int pid){
  * Function: helper function that checks if the given file is an executable file */
 int check_executable(char* filename){
     dentry_t dentry;
-
     if(open_f((const uint8_t*)filename) == -1){ //returns 0 if file can't be opened
 		return 0;
 	}
@@ -87,7 +87,7 @@ void set_prog_eip(char* filename){
 
     read_dentry_by_name((const uint8_t*)filename, &dentry); //get the directory entry of the given file
     file_len = get_file_len(&dentry);
-    read_data(dentry.inode_num, 0, ((uint32_t*)(PROG_IMAGE)), file_len);    //read the data of the entire file into the virtual address for programs
+    read_data(dentry.inode_num, 0, ((uint8_t*)(PROG_IMAGE)), file_len);    //read the data of the entire file into the virtual address for programs
     uint32_t* prog_image;
     prog_image = (uint32_t*)PROG_IMAGE_OFFSET;  //offset 24 bytes into the program to get the specific eip of the program
     prog_eip = (uint32_t)(*(prog_image));
@@ -104,6 +104,8 @@ int32_t sys_execute(const char* cmd){
     int c;
     int x;
     uint8_t arg_buf[ARG_MAX];
+
+    //33 is max filename size
     for(x = 0; x < 33; x++){
         buffer[x] = '\0';   //clearing the copy buffer
         arg_buf[x] = '\0';
@@ -132,7 +134,9 @@ int32_t sys_execute(const char* cmd){
     }
 
     task_avail = 0;
-    for(c = 0; c < 8; c++) {
+
+    //can have 6 tasks open at most
+    for(c = 0; c < 6; c++) {
         if(!tasks[c]) {
             tasks[c] = 1;
            // prog_counter = c;
@@ -261,19 +265,19 @@ int32_t sys_halt(uint8_t status){
     pcb_t* cur_pcb = get_pcb_from_pid(prog_counter - 1); //gets the current program's PCB
     pcb_t* parent_pcb;
      //prog_counter--; //decrement program counter
-    if(status == 15) {
-        status = 256;
-    }
-    else {
-        status = 0;
-    }
+    // if(status == 15) {
+    //     status = 256;
+    // }
+    // else {
+    //     status = 0;
+    // }
     if(prog_counter == 1){  //if current program is the first running one (shell)
         prog_counter--; //decrement program counter
         clear();
         clear_pos();
         tasks[prog_counter] = 0;
         parent_pcb = get_pcb_from_pid(0);
-        sys_execute((uint8_t*)"shell");   //start new shell
+        sys_execute("shell");   //start new shell
     }
     else{
         prog_counter--;
@@ -281,26 +285,19 @@ int32_t sys_halt(uint8_t status){
         parent_pcb = get_pcb_from_pid(cur_pcb->parent_pid);    //gets the current program's parent's PCB
     }
 
-
-   
     map_memory(parent_pcb->pid);    //re-maps virtual to physical memory for original program
-    for(i = 2; i < 8; i++){
+
+    //size of file descriptor array is 8
+    for(i = 0; i < 8; i++){
+        if(cur_pcb->fd_arr[i].flag == 1){
+            sys_close(i);
+        }
+        cur_pcb->fd_arr[i].jmp_pointer = &bad_file_op;
         cur_pcb->fd_arr[i].flag = 0;    //set all file operation flags to low
     }
     tss.ss0 = KERNEL_DS;    //set TSS ss0 to kernel data segment
     tss.esp0 = START_OF_USER - ((parent_pcb->pid) * KERNEL_STACK_SIZE) - sizeof(int32_t);   //sets the TSS esp0 to the kernel stack pointer
     ret_to_exec(cur_pcb->saved_ebp, cur_pcb->saved_esp, status);    //call asm linkage function for returning the execute sys call 
-    // asm volatile("          \n\
-    //         movl $0, %%ebp  \n\
-    //         movl $1, %%esp  \n\
-    //         movl $2, %%eax  \n\
-    //         leave           \n\
-    //         ret             \n\
-    //     "
-    //     :
-    //     :"r"(cur_pcb->saved_ebp), "r"(cur_pcb->saved_esp), "r"(status)
-    //     : "cc", "%eax", "%esp", "%ebp"
-    // );
     return 0;
 }
 
@@ -312,16 +309,15 @@ int32_t getargs(uint8_t* arguments_buf, int32_t nbytes){
     cli();
     pcb_t* pc_cur = get_pcb_from_pid(prog_counter - 1); //get current pcb
 
-    int i = 0; //loop idx
-
     if(arguments_buf == NULL) return -1; //check if buf is null
 
     if(nbytes < 0) return -1; //check if nbytes is negative
 
     if(nbytes > 1024) return -1; //check if nbytes is greater than max arg size
 
-    memcpy(arguments_buf, pc_cur->args, sizeof(pc_cur->args)); /* copy args into buf */
-
+    /* copy args into buf */
+    // strncpy((int8_t*)buf,(int8_t*)pc_cur->args, nbytes);
+    memcpy(arguments_buf, pc_cur->args, sizeof(pc_cur->args));
     sti();
 
     return 0;
@@ -339,7 +335,7 @@ int32_t vidmap (uint8_t** screen_start) {
     set_up_vidmap(); //helper function to set up video page
     flush_tlb();
 
-    *screen_start = (uint32_t *)(_136MB); //sets the screen start address to be at 136 MB 
+    *screen_start = (uint8_t*)(_136MB); //sets the screen start address to be at 136 MB 
      
      return 0;
 }
@@ -352,7 +348,7 @@ int32_t sys_open(const uint8_t* filename){
     int i = 0; // loop idx
     dentry_t dentry; //local dentry obj
 
-    if(filename == NULL){ //check if filename is null
+    if(filename == NULL || strlen((int8_t*)filename) == 0){ //check if filename is null
         return -1;
     }
     
@@ -404,6 +400,8 @@ int32_t sys_read(int32_t fd, void *buf, int32_t nbytes){
 
     if(fd < 0 || fd > FD_MAX) return -1; //invalid fd index
 
+    if(pc_cur->fd_arr[fd].flag == 0) return -1;
+
     if(fd == STDOUT) return -1; // return -1 for stdout on read
     //if(pc_cur->fd_arr[fd])
     return pc_cur->fd_arr[fd].jmp_pointer->read(fd, buf, nbytes); //call read 
@@ -441,10 +439,13 @@ int32_t sys_close(int32_t fd){
     pcb_t* pc_cur = get_pcb_from_pid(prog_counter - 1); //get current pcb
 
     /* change fd status from unavailable to available */
-    if(pc_cur->fd_arr[fd].flag == 1){
-        pc_cur->fd_arr[fd].flag = 0;
-        return 0;
+    if(pc_cur->fd_arr[fd].flag == 0){
+        return -1;
     }
-    return -1; //return -1 if trying to close an fd that that is unallocated
+    pc_cur->fd_arr[fd].flag = 0;
+    if(0 != pc_cur->fd_arr[fd].jmp_pointer->close(fd)){
+        return -1;
+    }
+    return 0; //return -1 if trying to close an fd that that is unallocated
 }
 

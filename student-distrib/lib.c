@@ -169,11 +169,11 @@ int32_t puts(int8_t* s) {
  * Return Value: void
  *  Function: Output a character to the console */
 void putc(uint8_t c) {
-    if(screen_x == 80 && screen_y < 24){
+    if(screen_x == 79 && screen_y < 24){
         screen_y++;
         screen_x = 0;
     }
-    if(screen_x == 80 && screen_y == 24){
+    else if(screen_x == 79 && screen_y == 24){
         screen_x = 0;
         int i;
         for (i = NUM_COLS; i < NUM_ROWS * NUM_COLS; i++) {
@@ -184,7 +184,7 @@ void putc(uint8_t c) {
             *(uint8_t *)(video_mem + (i << 1)) = ' ';
         }
     }
-    if(c == '\n' || c == '\r') {
+    else if(c == '\n' || c == '\r') {
         if(screen_y == 24 || screen_x == 79){
             screen_x = 0;
             int i;
