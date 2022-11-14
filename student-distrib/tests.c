@@ -236,7 +236,7 @@ void launch_tests(){
 	//TEST_OUTPUT("page test", paging_test());
 	//TEST_OUTPUT("page test 2", paging_test_2());
 	//TEST_OUTPUT("div_zero_test", div_zero_test());
-	//TEST_OUTPUT("file system cat test", cat_test("verylargetextwithverylongname.tx"));
+	// TEST_OUTPUT("file system cat test", cat_test("frame1.txt"));
 	//TEST_OUTPUT("list dir test", list_dir());
 	//TEST_OUTPUT("term", test_terminal());
 	//TEST_OUTPUT("rtc", test_rtc());

@@ -97,20 +97,27 @@ void set_prog_eip(char* filename){
 int32_t sys_execute(const char* cmd){
     int i = 0;
     int z = 0;
+    int y = 0;
     int c;
     int x;
     uint8_t arg_buf[ARG_MAX];
-    for(x = 0; x < 32; x++){
+    for(x = 0; x < 33; x++){
         buffer[x] = '\0';   //clearing the copy buffer
         arg_buf[x] = '\0';
     }
     int j;
+    while(cmd[i] == '\n' || cmd[i] == '\0' || cmd[i] == ' '){
+        i++;
+    } 
     while(cmd[i] != '\n' && cmd[i] != '\0' && cmd[i] != ' '){
-        buffer[i] = cmd[i]; //filling the copy buffer with the command name
+        buffer[y] = cmd[i]; //filling the copy buffer with the command name
+        y++;
         i++;
     }
 
-    i++;
+    while(cmd[i] == '\n' || cmd[i] == '\0' || cmd[i] == ' '){
+        i++;
+    } 
     while(cmd[i] != '\n' && cmd[i] != '\0' && cmd[i] != ' ') {
         arg_buf[z] = cmd[i];
         z++;
@@ -274,16 +281,28 @@ int32_t sys_halt(uint8_t status){
 
    
     map_memory(parent_pcb->pid);    //re-maps virtual to physical memory for original program
-    for(i = 0; i < 8; i++){
+    for(i = 2; i < 8; i++){
         cur_pcb->fd_arr[i].flag = 0;    //set all file operation flags to low
     }
     tss.ss0 = KERNEL_DS;    //set TSS ss0 to kernel data segment
     tss.esp0 = START_OF_USER - ((parent_pcb->pid) * KERNEL_STACK_SIZE) - sizeof(int32_t);   //sets the TSS esp0 to the kernel stack pointer
     ret_to_exec(cur_pcb->saved_ebp, cur_pcb->saved_esp, status);    //call asm linkage function for returning the execute sys call 
+    // asm volatile("          \n\
+    //         movl $0, %%ebp  \n\
+    //         movl $1, %%esp  \n\
+    //         movl $2, %%eax  \n\
+    //         leave           \n\
+    //         ret             \n\
+    //     "
+    //     :
+    //     :"r"(cur_pcb->saved_ebp), "r"(cur_pcb->saved_esp), "r"(status)
+    //     : "cc", "%eax", "%esp", "%ebp"
+    // );
     return 0;
 }
 
 int32_t getargs(uint8_t* arguments_buf, int32_t nbytes){
+    cli();
     pcb_t* pc_cur = get_pcb_from_pid(prog_counter - 1); //get current pcb
     int i = 0; //loop idx
 
@@ -295,19 +314,35 @@ int32_t getargs(uint8_t* arguments_buf, int32_t nbytes){
 
     /* copy args into buf */
     // strncpy((int8_t*)buf,(int8_t*)pc_cur->args, nbytes);
-    for(i = 0; i < nbytes; i++){
+    memcpy(arguments_buf, pc_cur->args, sizeof(pc_cur->args));
+    // for(i = 0; i < nbytes; i++){
      
-        if(pc_cur->args[i] == NULL) {
-            break;
-        } 
-        //putc(pc_cur->args[i]);
-        arguments_buf[i] = pc_cur->args[i];
-    }
+    //     // if(pc_cur->args[i] == NULL) {
+    //     //     break;
+    //     // } 
+    //     // putc(pc_cur->args[i]);
+    //     arguments_buf[i] = pc_cur->args[i];
+    // }
+    sti();
     return 0;
 }
 
 
+int32_t vidmap (uint8_t** screen_start) {
+    if(screen_start == NULL) return -1; //check if screen_start is null
 
+    // pcb_t* pc_cur = get_pcb_from_pid(prog_counter - 1); //get current pcb
+    // uint32_t pid = pc_cur->pid; //get pid
+
+    if((uint32_t)screen_start < 0x8000000 || (uint32_t)screen_start > 0x8000000 + START_OF_KERNEL) return -1; //check if screen_start is within bounds
+
+    set_up_vidmap();
+    flush_tlb();
+
+    *screen_start = (uint32_t *)(0x8800000);
+     
+     return 0;
+}
 
 /* int32_t sys_open(const uint8_t* filename)
  * Inputs: uint8_t filename - filename passed in to find dentry that contains it
@@ -370,7 +405,7 @@ int32_t sys_read(int32_t fd, void *buf, int32_t nbytes){
     if(fd < 0 || fd > FD_MAX) return -1; //invalid fd index
 
     if(fd == STDOUT) return -1; // return -1 for stdout on read
-
+    //if(pc_cur->fd_arr[fd])
     return pc_cur->fd_arr[fd].jmp_pointer->read(fd, buf, nbytes); //call read 
 }
 
@@ -385,7 +420,8 @@ int32_t sys_write(int32_t fd, const void *buf, int32_t nbytes){
 
     pcb_t* pc_cur = get_pcb_from_pid(prog_counter - 1); //get current pcb
 
-    if(pc_cur->fd_arr[fd].flag == 0) return -1; // return -1 if fd in use
+    //if(pc_cur->fd_arr[fd].flag == 0) return -1; // return -1 if fd in use
+    if(fd == STDIN) return -1;
 
     return pc_cur->fd_arr[fd].jmp_pointer->write(fd, buf, nbytes); //call write
 }
