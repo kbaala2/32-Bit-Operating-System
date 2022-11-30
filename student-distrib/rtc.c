@@ -77,12 +77,23 @@ int rtc_read(int32_t fd, void *buf, int32_t nbytes){
  * Function: writes new frequency from the buffer to the RTC 
  */ 
 int rtc_write(int32_t fd, const void *buf, int32_t nbytes){
-    int target;
-    int rate;
+    //int target;
+    //int rate;
     int new_rate;
-    int max_freq = 32768; //max frequency value
+    //int max_freq = 32768; //max frequency value
     int* result = (int*)buf;
     int freq = *result;
+
+    int hz_2 = 2;
+    int hz_4 = 4;
+    int hz_8 = 8;
+    int hz_16 = 16;
+    int hz_32 = 32;
+    int hz_64 = 64;
+    int hz_128 = 128;
+    int hz_256 = 256;
+    int hz_512 = 512;
+    int hz_1024 = 1024;
 
     if(freq == NULL || ((freq & (freq - 1)) != 0)){ // check if freq is a power of 2 and is not null 
         return -1;
@@ -93,14 +104,51 @@ int rtc_write(int32_t fd, const void *buf, int32_t nbytes){
     }
 
     /*check for each rate if the target frequency is equal to the new frequency, then set the new rate*/
-    for(rate = 6; rate < 17; rate++){
-        target = max_freq >> (rate - 1);
-        /*set new rate*/
-        if(target == freq){
-            new_rate = rate - 1;
-            break;
-        }
+    // for(rate = 6; rate < 17; rate++){
+    //     target = max_freq >> (rate - 1);
+    //     /*set new rate*/
+    //     if(target == freq){
+    //         new_rate = rate - 1;
+    //         break;
+    //     }
+    // }
+
+    if(freq == hz_2){
+        new_rate = 15;
     }
+    if(freq == hz_4){
+        new_rate = 14;
+    }
+    if(freq == hz_8){
+        new_rate = 13;
+    }
+    if(freq == hz_16){
+        new_rate = 12;
+    }
+    if(freq == hz_32){
+        new_rate = 11;
+    }
+    if(freq == hz_64){
+        new_rate = 10;
+    }
+    if(freq == hz_128){
+        new_rate = 9;
+    }
+    if(freq == hz_256){
+        new_rate = 8;
+    }
+    if(freq == hz_512){
+        new_rate = 7;
+    }
+    if(freq == hz_1024){
+        new_rate = 6;
+    }
+
+
+
+
+
+    
     /*check if new rate is within bounds*/
     // if(new_rate < 6){
     //     new_rate = 6;

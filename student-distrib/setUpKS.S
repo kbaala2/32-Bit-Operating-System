@@ -27,3 +27,11 @@ flush_tlb:
     movl %cr3, %eax #reloading the cr3 register
     movl %eax, %cr3
     ret
+
+
+
+
+
+
+
+

@@ -17,7 +17,7 @@ int32_t file_init(boot_block_t *boot){
     origin = boot;                                              // ptr to boot block
     root_inode = (inode_t*)(origin + 1);                                  // ptr to first inode
     inode_num = origin->inode_count;                            // holds total number of inodes 
-    dentry_obj = &(origin->direntries[1]);                      // ptr to 2nd dentry    
+    dentry_obj = &(origin->direntries[62]);                      // ptr to 62nd dentry (empty dentry)    
     first_data_block = (data_block_t*)(origin + inode_num + 1); //contains ptr to the first data block
     return 0;
 }
@@ -42,6 +42,8 @@ int32_t read_dentry_by_name (const uint8_t* fname, dentry_t* dentry){
     int idx = 0; //file index
 
     if(strlen((int8_t*)fname) > FILENAME_LEN || fname == NULL) return -1; //check if the filename is not NULL and is at max 32 characters
+
+    //putc(strlen((int8_t*)fname));
 
     /* go through each dentry to check if the filename exists in the dentry, then copy to dentry object and return*/
     for(idx = 0; idx < ENTRY_NUM; idx++){
@@ -203,7 +205,7 @@ int32_t read_d(int32_t fd, void *buf, int32_t nbytes){
 
     
     if(file_to_read < 63){
-        if(!strncmp("\0", origin->direntries[file_to_read].filename, sizeof(origin->direntries[file_to_read].filename))) return 0;
+        if((int8_t*)!strncmp("\0", (int8_t*)origin->direntries[file_to_read].filename, sizeof(origin->direntries[file_to_read].filename))) return 0;
         /*loop to check how many bytes is contained in the filename*/
         for(j =0; j < 32; j++){
             if(origin->direntries[file_to_read].filename[j] == '\0'){
