@@ -1,6 +1,7 @@
 #include "paging.h"
 #include "x86_desc.h"
 #include "lib.h"
+#include "sysCalls.h"
 
 #define VIDEO       0xB8000 //video memory address in physical memory
 #define VIDEO_MEM_INDEX 184
@@ -9,10 +10,12 @@
 #define VIDEO_DIR_INDEX 34
 extern void loadPageDirectory(uint32_t* page_dir);
 extern void enablePaging();
+extern void flush_tlb();
 
 page_directory_entry_t pde[NUM_ENTRIES] __attribute__((aligned(4096))); //aligned every 4mb
 page_table_entry_t pte[NUM_ENTRIES] __attribute__((aligned(4096))); //aligned every 4kb
 page_table_entry_t pte_vidmap[NUM_ENTRIES] __attribute__((aligned(4096)));
+
 
 void page_init(){
     int i;
@@ -123,4 +126,18 @@ void set_up_vidmap(){
     pte_vidmap[0].present = 1;
     pte_vidmap[0].user_supervisor = 1;
     pte_vidmap[0].page_base_addr = VIDEO >> 12;
+}
+
+void set_up_pid_map(int pid){
+
+    pde[32].present = 1;
+    pde[32].page_size = 1;
+    pde[32].user_supervisor = 1;
+    pde[32].read_write = 1;
+    pde[32].page_table_base_addr = ((pid * 0x400000) + 0x800000)>> 22; //multiple by 4mb and add 8 mb to get to the correct page directory entry
+    flush_tlb();
+}
+
+void set_up_vidmap_terminals(int vir_addr, int term){
+ 
 }
