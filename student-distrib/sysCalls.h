@@ -11,6 +11,7 @@ int check_executable(char* filename);
 void map_memory(int pid);
 void init_file_operations();
 
+extern int32_t execute_terminal(const char* cmd, int terminal_id);
 extern int32_t sys_execute(const char* cmd);
 extern int32_t sys_halt(uint8_t status);
 extern int32_t getargs (uint8_t* buf, int32_t nbytes);
@@ -49,12 +50,14 @@ typedef struct __attribute__ ((packed)) pcb {
     uint32_t saved_esp;
     uint32_t saved_ebp;
     int active;
+    int terminal_idx;
     uint8_t args[32];
     file_descriptor_t fd_arr[8];
 } pcb_t;
 
 pcb_t* get_pcb_from_pid(int pid);
 pcb_t* get_pcb();
+int find_available_pid();
 extern int prog_counter;
 
 #endif /* _SYSCALLS_H */

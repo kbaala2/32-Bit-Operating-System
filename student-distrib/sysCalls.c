@@ -27,6 +27,7 @@
 uint32_t prog_eip;
 uint8_t buf[4];
 int tasks[6] = {0, 0, 0, 0, 0, 0};
+int terminal_arr[3] = {0, 0, 0};
 int task_avail;
 uint32_t eflag_bitmask = 0x200; //masks everything other than the IF bit
 uint32_t stack_pointer = END_OF_VIRTUAL - sizeof(int32_t);
@@ -93,11 +94,7 @@ void set_prog_eip(char* filename){
     prog_eip = (uint32_t)(*(prog_image));
 }
 
-/* int32_t sys_execute(const char* cmd)
- * Inputs: const char* cmd - string holding the command name to be executed
- * Return Value: return value of halt if sys_halt invoked
- * Function: system call that attempts to load and call a new program */
-int32_t sys_execute(const char* cmd){
+int32_t execute_terminal(const char* cmd, int terminal_id){
     int i = 0;
     int z = 0;
     int y = 0;
@@ -106,7 +103,7 @@ int32_t sys_execute(const char* cmd){
     uint8_t arg_buf[ARG_MAX];
 
     //33 is max filename size
-    for(x = 0; x < 33; x++){
+    for(x = 0; x < 34; x++){
         buffer[x] = '\0';   //clearing the copy buffer
         arg_buf[x] = '\0';
     }
@@ -136,29 +133,36 @@ int32_t sys_execute(const char* cmd){
     task_avail = 0;
 
     //can have 6 tasks open at most
-    for(c = 0; c < 6; c++) {
-        if(!tasks[c]) {
-            tasks[c] = 1;
-           // prog_counter = c;
-            task_avail = 1;
-            break;
-        }
-    }
-    if(!task_avail) {
-        return -1;
+    // for(c = 0; c < 6; c++) {
+    //     if(!tasks[c]) {
+    //         tasks[c] = 1;
+    //        // prog_counter = c;
+    //         task_avail = 1;
+    //         break;
+    //     }
+    // }
+    // if(!task_avail) {
+    //     return -1;
+    // }
+    if(find_available_pid() == -1){
+        return 0;
     }
     map_memory(prog_counter);   //map virtual to physical memory for new program
 
     set_prog_eip(buffer);   //find program's eip for iret
  
     pcb_t* pc;
-    pc = get_pcb_from_pid(prog_counter);    //get first available PCB from kernel stack
+    pc = get_pcb_from_pid(prog_counter);   
+    //get first available PCB from kernel stack
     strcpy((int8_t*)pc->args, (int8_t*)arg_buf);
         pc->active = 1; //set PCB to active
-        if(prog_counter == 0){
-           // pc->parent_pid = NULL;  //if PCB is the first program, set parent pid to null
-            pc->parent_pid = 0;
+        if(terminal_arr[terminal_id] == 0){
+            pc->parent_pid = find_available_pid();
         }
+        // if(prog_counter == 0){
+        //    // pc->parent_pid = NULL;  //if PCB is the first program, set parent pid to null
+        //     pc->parent_pid = 0;
+        // }
         else{
             pc->parent_pid = prog_counter - 1;  //otherwise make parent pid one less than current pid
         }
@@ -190,6 +194,15 @@ int32_t sys_execute(const char* cmd){
     tss.esp0 = START_OF_USER - ((prog_counter-1) * KERNEL_STACK_SIZE) - sizeof(int32_t);    //sets the TSS esp0 to the kernel stack pointer
     goto_user(USER_DS, stack_pointer, eflag_bitmask, USER_CS, prog_eip);    //call asm linkage function for iret (userspace)
     return 0;
+}
+
+/* int32_t sys_execute(const char* cmd)
+ * Inputs: const char* cmd - string holding the command name to be executed
+ * Return Value: return value of halt if sys_halt invoked
+ * Function: system call that attempts to load and call a new program */
+int32_t sys_execute(const char* cmd){
+    pcb_t* curr_pcb = get_pcb();
+    execute_terminal(cmd, curr_pcb->terminal_idx);
 }
 
 /* void init_file_operations()
@@ -254,6 +267,16 @@ pcb_t* get_pcb(){
     pcb_t* cur_pcb;
     cur_pcb = (pcb_t*)(START_OF_USER - ((prog_counter+1) * KERNEL_STACK_SIZE)); //calculates place in memory where current program's PCB exists
     return cur_pcb;
+}
+
+int find_available_pid(){
+    int i;
+    for(i = 0; i < 6; i++){
+        if(tasks[i] == 0){
+            return i;
+        }
+    }
+    return -1;
 }
 
 /* int32_t sys_halt(uint8_t status)

@@ -1,6 +1,7 @@
 #include "keyboard.h"
 #include "lib.h"
 #include "i8259.h"
+#include "sysCalls.h"
 
 #define KEYBOARD_IRQ_NUM 1
 #define KEYBOARD_PORT 0x60
@@ -8,12 +9,15 @@
 int shift_flag = 0;
 int ctrl_flag = 0;
 int caps_flag = 0;
+int alt_flag = 0;
 char kb_buffer[128];
 int count = 0;
 int clear_screen = 0;
 int enter_pressed = 0;
 int tab_flag = 0;
 int shifted_char;
+volatile int terminal_2_active = 0;
+volatile int terminal_3_active = 0;
 
 // 0x60 is scan code
 
@@ -83,9 +87,14 @@ void keyboard_handler(void){
     int i;
     scan_code = inb(KEYBOARD_PORT);
 
-    //control presed
+    //control pressed
     if(scan_code == 0x1D){
         ctrl_flag = 1;
+    }
+
+    //alt pressed
+    else if(scan_code == 0x38){
+        alt_flag = 1;
     }
 
     //shift pressed
@@ -112,6 +121,12 @@ void keyboard_handler(void){
     else if(scan_code == 0x9D){
         ctrl_flag = 0;
     }
+
+    //alt released
+    else if(scan_code == 0xB8){
+        alt_flag = 0;
+    }
+
     //enter pressed
     else if(scan_code == 0x1C){
         enter_pressed = 1;
@@ -384,6 +399,39 @@ void keyboard_handler(void){
             putc(key_map[scan_code]);
             kb_buffer[count] = key_map[scan_code];
             count = 0; //reset count
+        }
+
+        //switch to terminal 1
+        else if(alt_flag && scan_code == 0x3B){
+            show_terminal(0);
+        }
+
+        //switch to terminal 2
+        else if(alt_flag && scan_code == 0x3C){
+            show_terminal(1);
+            if(!terminal_2_active){
+                if(find_available_pid() != -1){
+                    terminal_2_active = 1;
+                    execute_terminal((const char*)"shell", 1);
+                }
+                else{
+                    return;
+                }
+            }
+        }
+
+        //switch to terminal 3
+        else if(alt_flag && scan_code == 0x3D){
+            show_terminal(2);
+            if(!terminal_3_active){
+                if(find_available_pid() != -1){
+                    terminal_3_active = 1;
+                    execute_terminal((const char*)"shell", 2);
+                }
+                else{
+                    return;
+                }
+            }
         }
     }
     send_eoi(KEYBOARD_IRQ_NUM);
