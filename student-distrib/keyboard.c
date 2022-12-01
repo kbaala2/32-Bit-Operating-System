@@ -10,11 +10,14 @@ int shift_flag = 0;
 int ctrl_flag = 0;
 int caps_flag = 0;
 int alt_flag = 0;
-char kb_buffer[128];
-int count = 0;
+char kb_buffer[3][128];
+char term_buffer[3][2050];
+int visible_term;
+int count[3] = {0, 0, 0};
 int clear_screen = 0;
-int enter_pressed = 0;
+int enter_pressed[3] = {0, 0, 0};
 int tab_flag = 0;
+int curr_term;
 int shifted_char;
 volatile int terminal_2_active = 0;
 volatile int terminal_3_active = 0;
@@ -83,8 +86,11 @@ void keyboard_init(void){
  * Function: handles keyboard interrupt */
 void keyboard_handler(void){
     cli();
+    
+    visible_term = get_visible_terminal();
     unsigned char scan_code;
     int i;
+    
     scan_code = inb(KEYBOARD_PORT);
 
     //control pressed
@@ -129,7 +135,7 @@ void keyboard_handler(void){
 
     //enter pressed
     else if(scan_code == 0x1C){
-        enter_pressed = 1;
+        enter_pressed[visible_term] = 1;
     }
     
     /*check if valid input (is alphanumeric character or enter, tab, backspace). Range for alphanumeric characters in ASCII table is between
@@ -141,18 +147,18 @@ void keyboard_handler(void){
             //clear_screen = 1;
             clear();
             clear_pos();
-            for(i = 0; i < count; i++){
-                kb_buffer[i] = '\0'; //reset everything in keyboard buffer to null
+            for(i = 0; i < count[visible_term]; i++){
+                kb_buffer[visible_term][i] = '\0'; //reset everything in keyboard buffer to null
             }
-            count = 0; //reset count
+            count[visible_term] = 0; //reset count
         }
 
         //if there's still space in the buffer. Max amount of chars in kb_buffer is 128
-        else if(count < 127){
+        else if(count[visible_term] < 127){
             //check if scan_code is equal to scan_code for tab
             if(scan_code == 0x0F){ 
-                kb_buffer[count] = key_map[scan_code];
-                count++;
+                kb_buffer[visible_term][count[visible_term]] = key_map[scan_code];
+                count[visible_term]++;
                 putc(' ');
                 putc(' ');
                 putc(' ');
@@ -160,13 +166,13 @@ void keyboard_handler(void){
             }
             //check if scan_code is equal to scan_code for backspace
             else if(scan_code == 0x0E){
-                if(count > 0){
-                    if(kb_buffer[count-1] == '\t'){
+                if(count[visible_term] > 0){
+                    if(kb_buffer[visible_term][count[visible_term]-1] == '\t'){
                         tab_flag = 1;
                     }
                     putc(key_map[scan_code]);
-                    count--;
-                    kb_buffer[count] = '\0';
+                    count[visible_term]--;
+                    kb_buffer[visible_term][count[visible_term]] = '\0';
                 }
             }
 
@@ -381,24 +387,24 @@ void keyboard_handler(void){
                             break;
                     }
                     putc((char)shifted_char);
-                    kb_buffer[count] = (char)shifted_char;
-                    count++;
+                    kb_buffer[visible_term][count[visible_term]] = (char)shifted_char;
+                    count[visible_term]++;
                 }
                 // no shift or caps lock enabled
                 else{
                     putc(key_map[scan_code]);
-                    kb_buffer[count] = key_map[scan_code];
-                    count++;
+                    kb_buffer[visible_term][count[visible_term]] = key_map[scan_code];
+                    count[visible_term]++;
                 }
             }
             // enter_pressed = 0;
         }
         // if count is at kb_buffer limit (only room for enter) and scan_code is scan code for enter (0x1C)
-        else if(count == 127 && scan_code == 0x1C){
+        else if(count[visible_term] == 127 && scan_code == 0x1C){
             // enter_pressed = 1;
             putc(key_map[scan_code]);
-            kb_buffer[count] = key_map[scan_code];
-            count = 0; //reset count
+            kb_buffer[visible_term][count[visible_term]] = key_map[scan_code];
+            count[visible_term] = 0; //reset count
         }
 
         //switch to terminal 1

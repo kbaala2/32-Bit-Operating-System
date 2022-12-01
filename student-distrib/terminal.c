@@ -21,18 +21,26 @@ int32_t terminal_read (int32_t fd, void* buf, int32_t nbytes){
     if(nbytes > MAX_BUFFER_SIZE){
         nbytes = MAX_BUFFER_SIZE;   //limit the amount of bytes to be read to max buffer size (128 chars)
     }
-    while(!enter_pressed){} //do nothing if enter is not pressed
+
+    while(!enter_pressed[visible_term]){} //do nothing if enter is not pressed
+
+    memset(term_buffer[visible_term], 0, sizeof(term_buffer[visible_term]));
+    memcpy(term_buffer[visible_term], kb_buffer[visible_term], sizeof(kb_buffer[visible_term]));
+    memset(kb_buffer[visible_term], 0, sizeof(kb_buffer[visible_term]));
+
     char* result = (char*)buf;
+    int act_term = get_act_term();
+    
     for(i = 0; i < nbytes; i++){    //loop through each character in keyboard buffer once enter is pressed
-        result[i] = kb_buffer[i];   //copy contents to general buffer
-        kb_buffer[i] = '\0';    //clear contents of keyboard buffer
+        result[i] = term_buffer[act_term][i];   //copy contents to general buffer
+      //  kb_buffer[act_term][i] = '\0';    //clear contents of keyboard buffer
         if(result[i] == '\n') {
             nbytes = i + 1; //when we reach the newline character, set nbytes to the amount of bytes read at that point
             break;
         }
     }
-    enter_pressed = 0;  //reset enter flag and index for keyboard buffer
-    count = 0;
+    enter_pressed[act_term] = 0;  //reset enter flag and index for keyboard buffer
+    count[visible_term] = 0;
     return nbytes;  //return number of bytes read
 }
 
@@ -54,11 +62,14 @@ int32_t terminal_write (int32_t fd, const void* buf, int32_t nbytes){
     }
     char* result = (char*)buf;
     int i = 0;
+    int act_term = get_act_term();
     for(i = 0; i < nbytes; i++){    //loop through each character in the buffer and output to screen
         if(result[i] == '\0') {
             continue;
         }
-        putc(result[i]);
+        term_buffer[visible_term][i] = result[i];
+
+        putc(term_buffer[visible_term][i]);
     }
     sti();  //enable interrupts
     return nbytes;  //return number of bytes written
