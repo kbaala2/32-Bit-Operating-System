@@ -139,5 +139,5 @@ void set_up_pid_map(int pid){
 }
 
 void set_up_vidmap_terminals(int vir_addr, int term){
- 
+    
 }

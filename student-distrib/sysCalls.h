@@ -49,6 +49,7 @@ typedef struct __attribute__ ((packed)) pcb {
     uint32_t saved_esp;
     uint32_t saved_ebp;
     int active;
+    int32_t terminal_num;
     uint8_t args[32];
     file_descriptor_t fd_arr[8];
 } pcb_t;
