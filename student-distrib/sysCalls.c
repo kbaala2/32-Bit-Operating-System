@@ -36,6 +36,7 @@ extern void flush_tlb();
 extern void goto_user(uint32_t SS, uint32_t ESP, uint32_t eflag_bitmask, uint32_t CS, uint32_t EIP);
 uint32_t dir_index = 0;
 int prog_counter = 0;
+int pid;
 int bad_call();
 extern void ret_to_exec(uint32_t old_ebp, uint32_t old_esp, uint32_t status);
 void set_up_vidmap();
@@ -144,31 +145,45 @@ int32_t execute_terminal(const char* cmd, int terminal_id){
     // if(!task_avail) {
     //     return -1;
     // }
-    if(find_available_pid() == -1){
-        return 0;
+    pid = find_available_pid();
+    if(pid == -1){
+        return 0; //no available pids
     }
-    map_memory(prog_counter);   //map virtual to physical memory for new program
+    
+    tasks[pid] = 1; //pid is being used
+
+    map_memory(pid);   //map virtual to physical memory for new program
 
     set_prog_eip(buffer);   //find program's eip for iret
  
     pcb_t* pc;
-    pc = get_pcb_from_pid(prog_counter);   
+    pc = get_pcb_from_pid(pid);   
     //get first available PCB from kernel stack
     strcpy((int8_t*)pc->args, (int8_t*)arg_buf);
         pc->active = 1; //set PCB to active
         if(terminal_arr[terminal_id] == 0){
-            pc->parent_pid = find_available_pid();
+            pc->parent_pid = pid;
         }
         // if(prog_counter == 0){
         //    // pc->parent_pid = NULL;  //if PCB is the first program, set parent pid to null
         //     pc->parent_pid = 0;
         // }
         else{
-            pc->parent_pid = prog_counter - 1;  //otherwise make parent pid one less than current pid
+            //just update to previous pid
+            pc->parent_pid = prog_counter;  //otherwise make parent pid one less than current pid
         }
-        pc->pid = prog_counter;
+
+        pc->pid = pid; //set pcb pid to new pid
+
+        //update program variables
+        prog_counter = pid;
+        terminal_arr[terminal_id] = pid;
+        pc->terminal_idx = terminal_id;
+
+        set_active_terminal(terminal_id); //will need to implement in lib and set up paging
+
         
-        prog_counter++; //increment global program counter
+     //   prog_counter++; //increment global program counter
         asm volatile ("          \n\
                      movl %%ebp, %%eax  \n\
                      movl %%esp, %%ebx  \n\
@@ -285,8 +300,8 @@ int find_available_pid(){
  * Function: system call that terminates a process */
 int32_t sys_halt(uint8_t status){
     int i;
-    pcb_t* cur_pcb = get_pcb_from_pid(prog_counter - 1); //gets the current program's PCB
-    pcb_t* parent_pcb;
+    pcb_t* cur_pcb = get_pcb_from_pid(prog_counter); //gets the current program's PCB
+    pcb_t* parent_pcb = get_pcb_from_pid(cur_pcb->parent_pid);
      //prog_counter--; //decrement program counter
     // if(status == 15) {
     //     status = 256;
@@ -294,19 +309,22 @@ int32_t sys_halt(uint8_t status){
     // else {
     //     status = 0;
     // }
-    if(prog_counter == 1){  //if current program is the first running one (shell)
-        prog_counter--; //decrement program counter
-        clear();
-        clear_pos();
-        tasks[prog_counter] = 0;
-        parent_pcb = get_pcb_from_pid(0);
-        sys_execute("shell");   //start new shell
+    tasks[cur_pcb->pid] = 0;
+    prog_counter = cur_pcb->parent_pid;
+    terminal_arr[cur_pcb->terminal_idx] = cur_pcb->parent_pid;
+    if(cur_pcb->pid == cur_pcb->parent_pid){  //if current program is the first running one (shell)
+        // prog_counter--; //decrement program counter
+        // clear();
+        // clear_pos();
+        // tasks[prog_counter] = 0;
+        // parent_pcb = get_pcb_from_pid(0);
+        execute_terminal("shell", cur_pcb->terminal_idx);   //start new shell
     }
-    else{
-        prog_counter--;
-        tasks[prog_counter] = 0;
-        parent_pcb = get_pcb_from_pid(cur_pcb->parent_pid);    //gets the current program's parent's PCB
-    }
+    // else{
+    //     prog_counter--;
+    //     tasks[prog_counter] = 0;
+    //     parent_pcb = get_pcb_from_pid(cur_pcb->parent_pid);    //gets the current program's parent's PCB
+    // }
 
     map_memory(parent_pcb->pid);    //re-maps virtual to physical memory for original program
 
