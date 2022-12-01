@@ -8,6 +8,7 @@
 #define NUM_ENTRIES 1024
 #define START_OF_KERNEL 0x400000
 #define VIDEO_DIR_INDEX 34
+#define PAGE_VIDEO 0xB8
 extern void loadPageDirectory(uint32_t* page_dir);
 extern void enablePaging();
 extern void flush_tlb();
@@ -139,5 +140,51 @@ void set_up_pid_map(int pid){
 }
 
 void set_up_vidmap_terminals(int vir_addr, int term){
-    
+    int pd_idx;
+    int terminal_display = get_visible_terminal();
+    pd_idx = vir_addr >> 22;
+
+    page_directory_entry_t vidmap_entry;
+    vidmap_entry.present = 0;
+    vidmap_entry.read_write = 0;
+    vidmap_entry.user_supervisor = 0;
+    vidmap_entry.write_through = 0;
+    vidmap_entry.cache_disable = 0;
+    vidmap_entry.accessed = 0;
+    vidmap_entry.dirty = 0;
+    vidmap_entry.page_attribute_table = 0;
+    vidmap_entry.global = 0;
+    vidmap_entry.available = 0;
+    vidmap_entry.page_base_addr = 0;
+
+    pde[pd_idx] = vidmap_entry;
+
+    pde[pd_idx].present = 1;
+    pde[pd_idx].user_supervisor = 1;
+    pde[pd_idx].read_write = 1;
+    pde[pd_idx].page_table_base_addr = (uint32_t)pte_vidmap >> 12;
+
+    pte_vidmap[0].present = 1;
+    pte_vidmap[0].read_write = 1;
+    pte_vidmap[0].user_supervisor = 1;
+    pte_vidmap[0].write_through = 1;
+    pte_vidmap[0].cache_disable = 0;
+    pte_vidmap[0].accessed = 0;
+    pte_vidmap[0].dirty = 0;
+    pte_vidmap[0].page_attribute_table = 0;
+    pte_vidmap[0].global = 0;
+    pte_vidmap[0].available = 0;
+
+    if(term == terminal_display){
+        pte_vidmap[0].page_base_addr = PAGE_VIDEO;
+    }
+    else{
+        pte_vidmap[0].page_base_addr = 0;
+    }
+    flush_tlb();
+}
+
+void set_active_paging(){
+    pte[PAGE_VIDEO].page_base_addr = PAGE_VIDEO;
+    flush_tlb();
 }

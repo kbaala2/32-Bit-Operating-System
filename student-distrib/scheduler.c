@@ -11,6 +11,7 @@
 
 #define _8MB 0x800000
 #define PCB_SIZE 0x1000
+#define _1MB 0x100000
 
 int8_t prog_timer = 0;
 
@@ -48,19 +49,20 @@ void pit_handler(void){
         next_term = get_next_terminal(next_term);
     }
 
-    pcb_t *next_pcb = get_pcb_from_pid(curr_terminal[next_term]);
+    pcb_t* next_pcb = get_pcb_from_pid(curr_terminal[next_term]);
 
     set_up_pid_map(next_pcb->pid);
+    set_up_vidmap_terminals(132 * _1MB, next_pcb->terminal);
     
 
     tss.ss0 = KERNEL_DS;
     tss.esp0 = _8MB - (PCB_SIZE * next_pcb->pid) - 10;
-
-
+    set_active_terminal(next_pcb->terminal);
 
 
     sti();
-    //switch terminals
+
+    //save current terminal esp and ebp
     asm volatile(
         "movl %%esp, %0;"
         "movl %%ebp, %1;"
@@ -68,6 +70,7 @@ void pit_handler(void){
         :"=r"(cur_pcb->saved_esp), "=r"(cur_pcb->saved_ebp)
     );
 
+    //load in next process esp and ebp
     asm volatile(
         "movl %0, %%esp;"
         "movl %1, %%ebp;"
