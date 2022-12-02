@@ -21,6 +21,8 @@ goto_user:
     pushl %edi  #pushing CS
     movl 24(%ebp), %esi
     pushl %esi  #pushing eip
+    # addl $32, %esp
+    # addl $32, %ebp
     iret    #switch to userspace
 
 flush_tlb:

@@ -29,7 +29,7 @@ int32_t terminal_read (int32_t fd, void* buf, int32_t nbytes){
     memset(kb_buffer[visible_term], 0, sizeof(kb_buffer[visible_term]));
 
     char* result = (char*)buf;
-    int act_term = get_act_term();
+    int act_term = get_act_terminal();
     
     for(i = 0; i < nbytes; i++){    //loop through each character in keyboard buffer once enter is pressed
         result[i] = term_buffer[act_term][i];   //copy contents to general buffer
@@ -62,7 +62,7 @@ int32_t terminal_write (int32_t fd, const void* buf, int32_t nbytes){
     }
     char* result = (char*)buf;
     int i = 0;
-    int act_term = get_act_term();
+    int act_term = get_act_terminal();
     for(i = 0; i < nbytes; i++){    //loop through each character in the buffer and output to screen
         if(result[i] == '\0') {
             continue;

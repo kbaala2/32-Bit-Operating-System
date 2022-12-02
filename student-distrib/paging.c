@@ -53,6 +53,42 @@ void page_init(){
     pte[VIDEO_MEM_INDEX].available = 0x00;
     pte[VIDEO_MEM_INDEX].present = 1;
 
+    pte[VIDEO_MEM_INDEX+1].page_base_addr = ((uint32_t) VIDEO >> 12) + 1; //shift from 32 bits to 20 bits
+    pte[VIDEO_MEM_INDEX+1].read_write = 0;
+    pte[VIDEO_MEM_INDEX+1].user_supervisor = 0;
+    pte[VIDEO_MEM_INDEX+1].write_through = 0;
+    pte[VIDEO_MEM_INDEX+1].cache_disable = 0;
+    pte[VIDEO_MEM_INDEX+1].accessed = 0;
+    pte[VIDEO_MEM_INDEX+1].dirty = 0;
+    pte[VIDEO_MEM_INDEX+1].page_attribute_table = 0;
+    pte[VIDEO_MEM_INDEX+1].global = 0;
+    pte[VIDEO_MEM_INDEX+1].available = 0x00;
+    pte[VIDEO_MEM_INDEX+1].present = 1;
+
+    pte[VIDEO_MEM_INDEX+2].page_base_addr = ((uint32_t) VIDEO >> 12) + 2; //shift from 32 bits to 20 bits
+    pte[VIDEO_MEM_INDEX+2].read_write = 0;
+    pte[VIDEO_MEM_INDEX+2].user_supervisor = 0;
+    pte[VIDEO_MEM_INDEX+2].write_through = 0;
+    pte[VIDEO_MEM_INDEX+2].cache_disable = 0;
+    pte[VIDEO_MEM_INDEX+2].accessed = 0;
+    pte[VIDEO_MEM_INDEX+2].dirty = 0;
+    pte[VIDEO_MEM_INDEX+2].page_attribute_table = 0;
+    pte[VIDEO_MEM_INDEX+2].global = 0;
+    pte[VIDEO_MEM_INDEX+2].available = 0x00;
+    pte[VIDEO_MEM_INDEX+2].present = 1;
+
+    pte[VIDEO_MEM_INDEX+3].page_base_addr = ((uint32_t) VIDEO >> 12) + 3; //shift from 32 bits to 20 bits
+    pte[VIDEO_MEM_INDEX+3].read_write = 0;
+    pte[VIDEO_MEM_INDEX+3].user_supervisor = 0;
+    pte[VIDEO_MEM_INDEX+3].write_through = 0;
+    pte[VIDEO_MEM_INDEX+3].cache_disable = 0;
+    pte[VIDEO_MEM_INDEX+3].accessed = 0;
+    pte[VIDEO_MEM_INDEX+3].dirty = 0;
+    pte[VIDEO_MEM_INDEX+3].page_attribute_table = 0;
+    pte[VIDEO_MEM_INDEX+3].global = 0;
+    pte[VIDEO_MEM_INDEX+3].available = 0x00;
+    pte[VIDEO_MEM_INDEX+3].present = 1;
+
     /* generically fill Page Directory */
     for(i = 0; i < NUM_ENTRIES; i++){
         pde[i].present = 0;
@@ -152,10 +188,10 @@ void set_up_vidmap_terminals(int vir_addr, int term){
     vidmap_entry.cache_disable = 0;
     vidmap_entry.accessed = 0;
     vidmap_entry.dirty = 0;
-    vidmap_entry.page_attribute_table = 0;
+    vidmap_entry.page_size = 0;
     vidmap_entry.global = 0;
     vidmap_entry.available = 0;
-    vidmap_entry.page_base_addr = 0;
+    vidmap_entry.page_table_base_addr = 0;
 
     pde[pd_idx] = vidmap_entry;
 

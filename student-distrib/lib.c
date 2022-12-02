@@ -14,7 +14,7 @@ static int screen_x[3] = {0, 0, 0};
 static int screen_y[3] = {0, 0, 0};
 static char* video_mem = (char *)VIDEO;
 static char* term_mem[3] = {(char*)(VIDEO+0x1000), (char*)(VIDEO+0x2000),(char*)(VIDEO+0x3000)};
-static int visible_term = 0;
+static int vis_term = 0;
 static int active_term = 0;
 
 int get_act_terminal() {
@@ -22,23 +22,22 @@ int get_act_terminal() {
 }
 
 int get_visible_terminal() {
-    return visible_term;
+    return vis_term;
 }
 
 void set_act_terminal(int term_id) {
-    if(term_id == visible_term)
-    set_act_terminal(term_id);
-
+    if(term_id == vis_term)
+    set_active_paging();
     active_term = term_id;
 }
 
 void set_display_terminal(int term_id) {
-    memcpy(term_mem[visible_term], visible_term, FOUR_KB);
-    memcpy(VIDEO, term_mem[term_id], FOUR_KB);
-    visible_term = term_id;
+    memcpy(term_mem[vis_term], video_mem, FOUR_KB);
+    memcpy(video_mem, term_mem[term_id], FOUR_KB);
+    vis_term = term_id;
     set_act_terminal(active_term);
-    
 }
+
 /* void clear(void);
  * Inputs: void
  * Return Value: none
@@ -202,7 +201,7 @@ void putc(uint8_t c) {
     else if(screen_x[active_term] == 79 && screen_y[active_term] == 24){
         screen_x[active_term] = 0;
         int i;
-        if(active_term == visible_term){
+        if(active_term == vis_term){
             for (i = NUM_COLS; i < NUM_ROWS * NUM_COLS; i++) {
                 *(uint8_t *)(video_mem + ((i-NUM_COLS) << 1)) = *(uint8_t *)(video_mem + (i << 1));
                 *(uint8_t *)(video_mem + (i << 1) + 1) = 0x3;
@@ -225,7 +224,7 @@ void putc(uint8_t c) {
         if(screen_y[active_term] == 24 || screen_x[active_term] == 79){
             screen_x[active_term] = 0;
             int i;
-            if(active_term == visible_term){
+            if(active_term == vis_term){
                 for (i = NUM_COLS; i < NUM_ROWS * NUM_COLS; i++) {
                     *(uint8_t *)(video_mem + ((i-NUM_COLS) << 1)) = *(uint8_t *)(video_mem + (i << 1));
                     *(uint8_t *)(video_mem + (i << 1) + 1) = 0x3;
@@ -262,7 +261,7 @@ void putc(uint8_t c) {
         else{
             screen_x[active_term]--;
         }
-        if(active_term == visible_term){
+        if(active_term == vis_term){
             *(uint8_t *)(video_mem + ((NUM_COLS * screen_y[active_term] + screen_x[active_term]) << 1)) = ' ';
             *(uint8_t *)(video_mem + ((NUM_COLS * screen_y[active_term] + screen_x[active_term]) << 1) + 1) = 0x3;
         }
@@ -283,7 +282,7 @@ void putc(uint8_t c) {
         }
     }
     else {
-        if(active_term == visible_term){
+        if(active_term == vis_term){
             *(uint8_t *)(video_mem + ((NUM_COLS * screen_y[active_term] + screen_x[active_term]) << 1)) = c;
             *(uint8_t *)(video_mem + ((NUM_COLS * screen_y[active_term] + screen_x[active_term]) << 1) + 1) = 0x3;
         }
@@ -297,8 +296,8 @@ void putc(uint8_t c) {
 }
 
 void clear_pos(){
-    screen_x[visible_term] = 0;
-    screen_y[visible_term] = 0;
+    screen_x[vis_term] = 0;
+    screen_y[vis_term] = 0;
 }
 
 /* int8_t* itoa(uint32_t value, int8_t* buf, int32_t radix);

@@ -1,19 +1,21 @@
 
 
 
-#include "scheduler.h"
+
 #include "lib.h"
 #include "i8259.h"
 #include "x86_desc.h"
 #include "paging.h"
 #include "terminal.h"
 #include "sysCalls.h"
+#include "scheduler.h"
 
 #define _8MB 0x800000
 #define PCB_SIZE 0x1000
 #define _1MB 0x100000
 
 int8_t prog_timer = 0;
+int32_t curr_terminal[MAX_TERMINALS];
 
 int32_t get_next_terminal(int32_t curr){
     int32_t next_terminal = (curr + 1) % MAX_TERMINALS;
@@ -44,7 +46,7 @@ void pit_handler(void){
     pcb_t *cur_pcb = get_pcb_from_pid(prog_counter - 1);
 
 
-    next_term = get_next_terminal(cur_pcb->terminal_num);
+    next_term = get_next_terminal(cur_pcb->terminal_idx);
     while(curr_terminal[next_term] == -1){
         next_term = get_next_terminal(next_term);
     }
@@ -52,32 +54,33 @@ void pit_handler(void){
     pcb_t* next_pcb = get_pcb_from_pid(curr_terminal[next_term]);
 
     set_up_pid_map(next_pcb->pid);
-    set_up_vidmap_terminals(132 * _1MB, next_pcb->terminal);
+    set_up_vidmap_terminals(132 * _1MB, next_pcb->terminal_idx);
     
 
     tss.ss0 = KERNEL_DS;
     tss.esp0 = _8MB - (PCB_SIZE * next_pcb->pid) - 10;
-    set_active_terminal(next_pcb->terminal);
+    set_act_terminal(next_pcb->terminal_idx);
 
 
     sti();
 
     //save current terminal esp and ebp
-    asm volatile(
-        "movl %%esp, %0;"
-        "movl %%ebp, %1;"
-        :
-        :"=r"(cur_pcb->saved_esp), "=r"(cur_pcb->saved_ebp)
-    );
+    asm volatile ("          \n\
+                 movl %%ebp, %1  \n\
+                 movl %%esp, %0  \n\
+            "
+            :"=a"(cur_pcb->saved_esp), "=b"(cur_pcb->saved_ebp)
+            );
 
     //load in next process esp and ebp
-    asm volatile(
-        "movl %0, %%esp;"
-        "movl %1, %%ebp;"
-        "LEAVE;"
-        "RET;"
-        :"r"(next_pcb->saved_esp), "r"(next_pcb->saved_ebp)
-    );
+    asm volatile ("          \n\
+                 movl %0, %%esp  \n\
+                 movl %1, %%ebp  \n\
+                 leave           \n\
+                 ret             \n\
+            "
+            :"=a"(next_pcb->saved_esp), "=b"(next_pcb->saved_ebp)
+            );
 
     return;
 }

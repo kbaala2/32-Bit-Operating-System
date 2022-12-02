@@ -140,7 +140,7 @@ void keyboard_handler(void){
     
     /*check if valid input (is alphanumeric character or enter, tab, backspace). Range for alphanumeric characters in ASCII table is between
     32-127, and range for enter, tab, backspace is between 8 and 10*/
-    if((key_map[scan_code] >= 32) || (key_map[scan_code] >= 8 && key_map[scan_code] <= 10)){
+    if((key_map[scan_code] >= 32) || (key_map[scan_code] >= 8 && key_map[scan_code] <= 10) || (scan_code == 0x3B || scan_code == 0x3C || scan_code == 0x3D)){
 
         //ctrl + l, scan_code for l is 0x26
         if(ctrl_flag == 1 && scan_code == 0x26){
@@ -151,6 +151,40 @@ void keyboard_handler(void){
                 kb_buffer[visible_term][i] = '\0'; //reset everything in keyboard buffer to null
             }
             count[visible_term] = 0; //reset count
+        }
+
+        
+        //switch to terminal 1
+        else if(alt_flag && scan_code == 0x3B){
+            set_display_terminal(0);
+        }
+
+        //switch to terminal 2
+        else if(alt_flag && scan_code == 0x3C){
+            set_display_terminal(1);
+            if(!terminal_2_active){
+                if(find_available_pid() != -1){
+                    terminal_2_active = 1;
+                    //execute_terminal((const char*)"shell", 1);
+                }
+                else{
+                    return;
+                }
+            }
+        }
+
+        //switch to terminal 3
+        else if(alt_flag && scan_code == 0x3D){
+            set_display_terminal(2);
+            if(!terminal_3_active){
+                if(find_available_pid() != -1){
+                    terminal_3_active = 1;
+                    //execute_terminal((const char*)"shell", 2);
+                }
+                else{
+                    return;
+                }
+            }
         }
 
         //if there's still space in the buffer. Max amount of chars in kb_buffer is 128
@@ -405,39 +439,6 @@ void keyboard_handler(void){
             putc(key_map[scan_code]);
             kb_buffer[visible_term][count[visible_term]] = key_map[scan_code];
             count[visible_term] = 0; //reset count
-        }
-
-        //switch to terminal 1
-        else if(alt_flag && scan_code == 0x3B){
-            show_terminal(0);
-        }
-
-        //switch to terminal 2
-        else if(alt_flag && scan_code == 0x3C){
-            show_terminal(1);
-            if(!terminal_2_active){
-                if(find_available_pid() != -1){
-                    terminal_2_active = 1;
-                    execute_terminal((const char*)"shell", 1);
-                }
-                else{
-                    return;
-                }
-            }
-        }
-
-        //switch to terminal 3
-        else if(alt_flag && scan_code == 0x3D){
-            show_terminal(2);
-            if(!terminal_3_active){
-                if(find_available_pid() != -1){
-                    terminal_3_active = 1;
-                    execute_terminal((const char*)"shell", 2);
-                }
-                else{
-                    return;
-                }
-            }
         }
     }
     send_eoi(KEYBOARD_IRQ_NUM);
