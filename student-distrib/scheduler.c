@@ -14,11 +14,19 @@
 int8_t prog_timer = 0;
 int terminal_arr[MAX_TERMINALS];
 
+/* int32_t get_next_terminal
+ * Inputs: int32_t curr 
+ * Return Value: the next terminal
+ * Function: calculates which terminal to switch to*/
 int32_t get_next_terminal(int32_t curr){
     int32_t next_terminal = (curr + 1) % MAX_TERMINALS;
     return next_terminal;
 }
 
+/* void pit_init
+ * Inputs: none 
+ * Return Value: none
+ * Function: initializes pit*/
 void pit_init(void){
     //set the frequency of the PIT
     enable_irq(PIT_IRQ); //enable the PIT
@@ -27,6 +35,10 @@ void pit_init(void){
     outb((PIT_FREQ/TAR_FREQ) >> MSB_SHIFT, PIT_PORT); //set the MSB
 }
 
+/* void pit_init
+ * Inputs: none 
+ * Return Value: none
+ * Function: handles the pit interrupts*/
 void pit_handler(void){
     int next_term;
 
@@ -40,24 +52,24 @@ void pit_handler(void){
         execute_terminal("shell", 0);
     } 
 
-    pcb_t *cur_pcb = get_pcb_from_pid(pid);
+    pcb_t *cur_pcb = get_pcb_from_pid(pid); //get current pcb
 
 
     next_term = get_next_terminal(cur_pcb->terminal_idx);
-    while(terminal_arr[next_term] == -1){
+    while(terminal_arr[next_term] == -1){  // gets next termianl and update other terminals
         next_term = get_next_terminal(next_term);
     }
 
     pcb_t* next_pcb = get_pcb_from_pid(terminal_arr[next_term]);
 
-    set_up_pid_map(next_pcb->pid);
-    set_up_vidmap_terminals(132 * _1MB, next_pcb->terminal_idx);
+    set_up_pid_map(next_pcb->pid); //sets up pid map
+    set_up_vidmap_terminals(132 * _1MB, next_pcb->terminal_idx); //sets up vidmap
     
 
     tss.ss0 = KERNEL_DS;
-    tss.esp0 = _8MB - (0x2000 * next_pcb->pid) - sizeof(int32_t);
+    tss.esp0 = _8MB - (0x2000 * next_pcb->pid) - sizeof(int32_t); //set up stack and esp
     pid = next_pcb->pid;
-     set_act_terminal(next_pcb->terminal_idx);
+    set_act_terminal(next_pcb->terminal_idx); //set active terminal
 
 
     sti();

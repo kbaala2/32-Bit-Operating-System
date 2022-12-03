@@ -96,6 +96,10 @@ void set_prog_eip(char* filename){
     prog_eip = (uint32_t)(*(prog_image));
 }
 
+/* void set_prog_eip(char* filename)
+ * Inputs: char* cmd - command to executre, int terminal_id - terminal to execute from
+ * Return Value: 0
+ * Function: executes on the specific terminal */
 int32_t execute_terminal(const char* cmd, int terminal_id){
     int i = 0;
     int z = 0;

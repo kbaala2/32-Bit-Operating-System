@@ -18,14 +18,26 @@ static char* term_mem[3] = {(char*)(VIDEO+0x1000), (char*)(VIDEO+0x2000),(char*)
 static int vis_term = 0;
 static int active_term = 0;
 
+/* int get_act_terminal(void);
+ * Inputs: void
+ * Return Value: active term -- number of active terminal
+ * Function: gets active terminal number */
 int get_act_terminal() {
     return active_term;
 }
 
+/* int get_visible_terminal
+ * Inputs: void
+ * Return Value: active vis_term -- number of visible terminal
+ * Function: gets visible terminal number */
 int get_visible_terminal() {
     return vis_term;
 }
 
+/* int get_visible_terminal
+ * Inputs: int term_id -- terminal number to pass through
+ * Return Value: none
+ * Function: sets active terminal and updates paging */
 void set_act_terminal(int term_id) {
     if(term_id == vis_term) {
         set_active_paging();
@@ -33,6 +45,10 @@ void set_act_terminal(int term_id) {
     active_term = term_id;
 }
 
+/* int set_display_terminal
+ * Inputs: int term_id -- terminal number to pass through
+ * Return Value: none
+ * Function: sets display terminal and updates paging */
 void set_display_terminal(int term_id) {
     memcpy(term_mem[vis_term], video_mem, FOUR_KB);
     memcpy(video_mem, term_mem[term_id], FOUR_KB);
@@ -297,6 +313,10 @@ void putc(uint8_t c) {
     }
 }
 
+/* void putc_display(uint8_t c);
+ * Inputs: uint_8* c = character to print
+ * Return Value: void
+ *  Function: Output a character to the display */
 void putc_display(uint8_t c) {
     if(screen_x[vis_term] == 79 && screen_y[vis_term] < 24){
         screen_y[vis_term]++;
@@ -367,7 +387,10 @@ void putc_display(uint8_t c) {
 }
 
 
-
+/* void clear_pos(uint8_t c);
+ * Inputs: void
+ * Return Value: void
+ *  Function: clears position of cursor */
 void clear_pos(){
     screen_x[vis_term] = 0;
     screen_y[vis_term] = 0;

@@ -177,6 +177,11 @@ void set_up_vidmap(){
     pte_vidmap[0].page_base_addr = VIDEO >> 12;
 }
 
+
+/* void set_up_pid_map()
+ * Inputs: int pid -- pid number to set up
+ * Return Value: None
+ * Function: Helper function to be used in pid to set up the pid paging */
 void set_up_pid_map(int pid){
 
     pde[32].present = 1;
@@ -187,6 +192,10 @@ void set_up_pid_map(int pid){
     flush_tlb();
 }
 
+/* void set_up_vidmap()
+ * Inputs: int vir_addr -- virtual address to write to, int term -- termial to write to
+ * Return Value: None
+ * Function: Helper function to be used in vidmap to set up the vidmap paging for a specific terminal */
 void set_up_vidmap_terminals(int vir_addr, int term){
     int pd_idx;
     int terminal_display = get_visible_terminal();
@@ -232,6 +241,10 @@ void set_up_vidmap_terminals(int vir_addr, int term){
     flush_tlb();
 }
 
+/* void void set_active_paging
+ * Inputs: None
+ * Return Value: None
+ * Function: Helper function to update active termianl paging */
 void set_active_paging(){
     pte[PAGE_VIDEO].page_base_addr = PAGE_VIDEO;
     flush_tlb();
