@@ -1,7 +1,4 @@
 
-
-
-
 #include "lib.h"
 #include "i8259.h"
 #include "x86_desc.h"
@@ -31,7 +28,6 @@ void pit_init(void){
 }
 
 void pit_handler(void){
-    int curr_term;
     int next_term;
 
     cli();

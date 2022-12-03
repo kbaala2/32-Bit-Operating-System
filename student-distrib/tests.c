@@ -215,21 +215,21 @@ static inline void assertion_failure(){
 // /* Checkpoint 3 tests */
 
 // int sys_call_test(){
-// 	#define DO_CALL(name,number)       \
-// 	asm volatile ("                    \
-// 	.GLOBL " #name "                  ;\
-// 	" #name ":                        ;\
-// 			PUSHL	%EBX              ;\
-// 		MOVL	$" #number ",%EAX ;\
-// 		MOVL	8(%ESP),%EBX      ;\
-// 		MOVL	12(%ESP),%ECX     ;\
-// 		MOVL	16(%ESP),%EDX     ;\
-// 		INT	$0x80             ;\
-// 		CMP	$0xFFFFC000,%EAX  ;\
-// 		JBE	1f                ;\
-// 		MOVL	$-1,%EAX	  ;\
-// 	1:	POPL	%EBX              ;\
-// 		RET                        \
+// 	#define DO_CALL(name,number)       
+// 	asm volatile ("                    
+// 	.GLOBL " #name "                  ;
+// 	" #name ":                        ;
+// 			PUSHL	%EBX              ;
+// 		MOVL	$" #number ",%EAX ;
+// 		MOVL	8(%ESP),%EBX      ;
+// 		MOVL	12(%ESP),%ECX     ;
+// 		MOVL	16(%ESP),%EDX     ;
+// 		INT	$0x80             ;
+// 		CMP	$0xFFFFC000,%EAX  ;
+// 		JBE	1f                ;
+// 		MOVL	$-1,%EAX	  ;
+// 	1:	POPL	%EBX              ;
+// 		RET                        
 // 	")
 // 	DO_CALL(write_handler, 4);
 // }

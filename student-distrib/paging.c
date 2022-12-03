@@ -183,7 +183,7 @@ void set_up_pid_map(int pid){
     pde[32].page_size = 1;
     pde[32].user_supervisor = 1;
     pde[32].read_write = 1;
-    pde[32].page_table_base_addr = ((pid * 0x400000) + 0x800000)>> 22; //multiple by 4mb and add 8 mb to get to the correct page directory entry
+    pde[32].page_table_base_addr = ((pid * 0x400000) + 0x800000)>> 12; //multiple by 4mb and add 8 mb to get to the correct page directory entry
     flush_tlb();
 }
 

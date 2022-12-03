@@ -177,6 +177,32 @@ Description:
 Solution:
     We want the rate to be 6 if it is less than 6, but we were setting the rate to be 6 if it was greater than 6
 
+<--------------------------------------------------------->
+                          BUG 15                          
+<--------------------------------------------------------->
+Time:
+    2022.12.03.
+Creator:
+    Aryan Gupta.
+Description:
+    Our ls would page fault instantly
+Solution:
+    When remapping the pid map, we incorrectly shifted the bits and that caused it to page fault
+
+<--------------------------------------------------------->
+                          BUG 16                          
+<--------------------------------------------------------->
+Time:
+    2022.12.03.
+Creator:
+    Aryan Gupta.
+Description:
+    Our keyboard would not correctly write on the correct terminal
+Solution:
+    We did not correctly manage the buffer for the active buffer
+
+
+
 
 
 

@@ -12,6 +12,7 @@
 #include "keyboard.h"
 #include "filesys.h"
 #include "sysCalls.h"
+#include "scheduler.h"
 
 #define RUN_TESTS 0
 

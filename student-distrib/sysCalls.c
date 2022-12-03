@@ -101,7 +101,6 @@ int32_t execute_terminal(const char* cmd, int terminal_id){
     int z = 0;
     int next;
     int y = 0;
-    int c;
     int x;
     uint8_t arg_buf[ARG_MAX];
 
@@ -220,6 +219,7 @@ int32_t execute_terminal(const char* cmd, int terminal_id){
 int32_t sys_execute(const char* cmd){
     pcb_t* curr_pcb = get_pcb();
     execute_terminal(cmd, curr_pcb->terminal_idx);
+    return 0;
 }
 
 /* void init_file_operations()
