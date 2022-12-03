@@ -15,7 +15,7 @@
 #define _1MB 0x100000
 
 int8_t prog_timer = 0;
-int32_t curr_terminal[MAX_TERMINALS];
+int terminal_arr[MAX_TERMINALS];
 
 int32_t get_next_terminal(int32_t curr){
     int32_t next_terminal = (curr + 1) % MAX_TERMINALS;
@@ -38,27 +38,29 @@ void pit_handler(void){
     //send EOI
     send_eoi(PIT_IRQ);
 
-    if(curr_terminal[0] == -1){ //make new terminal if all are closed
+    if(terminal_arr[0] == -1){ //make new terminal if all are closed
         clear();
-        //todo
+        clear_pos();
+        execute_terminal("shell", 0);
     } 
 
-    pcb_t *cur_pcb = get_pcb_from_pid(prog_counter - 1);
+    pcb_t *cur_pcb = get_pcb_from_pid(pid);
 
 
     next_term = get_next_terminal(cur_pcb->terminal_idx);
-    while(curr_terminal[next_term] == -1){
+    while(terminal_arr[next_term] == -1){
         next_term = get_next_terminal(next_term);
     }
 
-    pcb_t* next_pcb = get_pcb_from_pid(curr_terminal[next_term]);
+    pcb_t* next_pcb = get_pcb_from_pid(terminal_arr[next_term]);
 
     set_up_pid_map(next_pcb->pid);
     set_up_vidmap_terminals(132 * _1MB, next_pcb->terminal_idx);
     
 
     tss.ss0 = KERNEL_DS;
-    tss.esp0 = _8MB - (PCB_SIZE * next_pcb->pid) - 10;
+    tss.esp0 = _8MB - (0x2000 * next_pcb->pid) - sizeof(int32_t);
+    pid = next_pcb->pid;
     set_act_terminal(next_pcb->terminal_idx);
 
 
@@ -66,10 +68,10 @@ void pit_handler(void){
 
     //save current terminal esp and ebp
     asm volatile ("          \n\
-                 movl %%ebp, %1  \n\
-                 movl %%esp, %0  \n\
+                 movl %%ebp, %0  \n\
+                 movl %%esp, %1  \n\
             "
-            :"=a"(cur_pcb->saved_esp), "=b"(cur_pcb->saved_ebp)
+            :"=r"(cur_pcb->saved_ebp), "=r"(cur_pcb->saved_esp)
             );
 
     //load in next process esp and ebp
@@ -79,7 +81,7 @@ void pit_handler(void){
                  leave           \n\
                  ret             \n\
             "
-            :"=a"(next_pcb->saved_esp), "=b"(next_pcb->saved_ebp)
+            ::"r"(next_pcb->saved_esp), "r"(next_pcb->saved_ebp)
             );
 
     return;

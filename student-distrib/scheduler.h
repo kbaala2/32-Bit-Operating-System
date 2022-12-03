@@ -12,7 +12,7 @@
 #define PIT_CMD_PORT 0x43
 #define PIT_CMD 0x36
 
-extern int32_t curr_terminal[MAX_TERMINALS];
+extern int terminal_arr[MAX_TERMINALS];
 extern void pit_init(void);
 extern void pit_handler(void);
 

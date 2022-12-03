@@ -86,6 +86,7 @@ void keyboard_init(void){
  * Function: handles keyboard interrupt */
 void keyboard_handler(void){
     cli();
+    send_eoi(KEYBOARD_IRQ_NUM);
     
     visible_term = get_visible_terminal();
     unsigned char scan_code;
@@ -156,6 +157,7 @@ void keyboard_handler(void){
         
         //switch to terminal 1
         else if(alt_flag && scan_code == 0x3B){
+            
             set_display_terminal(0);
         }
 
@@ -165,7 +167,7 @@ void keyboard_handler(void){
             if(!terminal_2_active){
                 if(find_available_pid() != -1){
                     terminal_2_active = 1;
-                    //execute_terminal((const char*)"shell", 1);
+                    execute_terminal((const char*)"shell", 1);
                 }
                 else{
                     return;
@@ -176,10 +178,11 @@ void keyboard_handler(void){
         //switch to terminal 3
         else if(alt_flag && scan_code == 0x3D){
             set_display_terminal(2);
+            
             if(!terminal_3_active){
                 if(find_available_pid() != -1){
                     terminal_3_active = 1;
-                    //execute_terminal((const char*)"shell", 2);
+                    execute_terminal((const char*)"shell", 2);
                 }
                 else{
                     return;
@@ -441,6 +444,5 @@ void keyboard_handler(void){
             count[visible_term] = 0; //reset count
         }
     }
-    send_eoi(KEYBOARD_IRQ_NUM);
     sti();
 }

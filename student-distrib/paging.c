@@ -42,10 +42,10 @@ void page_init(){
     }
     /* fill video memory page in page table */
     pte[VIDEO_MEM_INDEX].page_base_addr = (uint32_t) VIDEO >> 12; //shift from 32 bits to 20 bits
-    pte[VIDEO_MEM_INDEX].read_write = 0;
+    pte[VIDEO_MEM_INDEX].read_write = 1;
     pte[VIDEO_MEM_INDEX].user_supervisor = 0;
     pte[VIDEO_MEM_INDEX].write_through = 0;
-    pte[VIDEO_MEM_INDEX].cache_disable = 0;
+    pte[VIDEO_MEM_INDEX].cache_disable = 1;
     pte[VIDEO_MEM_INDEX].accessed = 0;
     pte[VIDEO_MEM_INDEX].dirty = 0;
     pte[VIDEO_MEM_INDEX].page_attribute_table = 0;
@@ -54,10 +54,10 @@ void page_init(){
     pte[VIDEO_MEM_INDEX].present = 1;
 
     pte[VIDEO_MEM_INDEX+1].page_base_addr = ((uint32_t) VIDEO >> 12) + 1; //shift from 32 bits to 20 bits
-    pte[VIDEO_MEM_INDEX+1].read_write = 0;
+    pte[VIDEO_MEM_INDEX+1].read_write = 1;
     pte[VIDEO_MEM_INDEX+1].user_supervisor = 0;
     pte[VIDEO_MEM_INDEX+1].write_through = 0;
-    pte[VIDEO_MEM_INDEX+1].cache_disable = 0;
+    pte[VIDEO_MEM_INDEX+1].cache_disable = 1;
     pte[VIDEO_MEM_INDEX+1].accessed = 0;
     pte[VIDEO_MEM_INDEX+1].dirty = 0;
     pte[VIDEO_MEM_INDEX+1].page_attribute_table = 0;
@@ -66,10 +66,10 @@ void page_init(){
     pte[VIDEO_MEM_INDEX+1].present = 1;
 
     pte[VIDEO_MEM_INDEX+2].page_base_addr = ((uint32_t) VIDEO >> 12) + 2; //shift from 32 bits to 20 bits
-    pte[VIDEO_MEM_INDEX+2].read_write = 0;
+    pte[VIDEO_MEM_INDEX+2].read_write = 1;
     pte[VIDEO_MEM_INDEX+2].user_supervisor = 0;
     pte[VIDEO_MEM_INDEX+2].write_through = 0;
-    pte[VIDEO_MEM_INDEX+2].cache_disable = 0;
+    pte[VIDEO_MEM_INDEX+2].cache_disable = 1;
     pte[VIDEO_MEM_INDEX+2].accessed = 0;
     pte[VIDEO_MEM_INDEX+2].dirty = 0;
     pte[VIDEO_MEM_INDEX+2].page_attribute_table = 0;
@@ -78,16 +78,28 @@ void page_init(){
     pte[VIDEO_MEM_INDEX+2].present = 1;
 
     pte[VIDEO_MEM_INDEX+3].page_base_addr = ((uint32_t) VIDEO >> 12) + 3; //shift from 32 bits to 20 bits
-    pte[VIDEO_MEM_INDEX+3].read_write = 0;
+    pte[VIDEO_MEM_INDEX+3].read_write = 1;
     pte[VIDEO_MEM_INDEX+3].user_supervisor = 0;
     pte[VIDEO_MEM_INDEX+3].write_through = 0;
-    pte[VIDEO_MEM_INDEX+3].cache_disable = 0;
+    pte[VIDEO_MEM_INDEX+3].cache_disable = 1;
     pte[VIDEO_MEM_INDEX+3].accessed = 0;
     pte[VIDEO_MEM_INDEX+3].dirty = 0;
     pte[VIDEO_MEM_INDEX+3].page_attribute_table = 0;
     pte[VIDEO_MEM_INDEX+3].global = 0;
     pte[VIDEO_MEM_INDEX+3].available = 0x00;
     pte[VIDEO_MEM_INDEX+3].present = 1;
+
+    // pte[VIDEO_MEM_INDEX+4].page_base_addr = ((uint32_t) VIDEO >> 12) + 4; //shift from 32 bits to 20 bits
+    // pte[VIDEO_MEM_INDEX+4].read_write = 1;
+    // pte[VIDEO_MEM_INDEX+4].user_supervisor = 0;
+    // pte[VIDEO_MEM_INDEX+4].write_through = 0;
+    // pte[VIDEO_MEM_INDEX+4].cache_disable = 1;
+    // pte[VIDEO_MEM_INDEX+4].accessed = 0;
+    // pte[VIDEO_MEM_INDEX+4].dirty = 0;
+    // pte[VIDEO_MEM_INDEX+4].page_attribute_table = 0;
+    // pte[VIDEO_MEM_INDEX+4].global = 0;
+    // pte[VIDEO_MEM_INDEX+4].available = 0x00;
+    // pte[VIDEO_MEM_INDEX+4].present = 1;
 
     /* generically fill Page Directory */
     for(i = 0; i < NUM_ENTRIES; i++){

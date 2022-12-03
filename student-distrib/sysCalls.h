@@ -59,5 +59,6 @@ pcb_t* get_pcb_from_pid(int pid);
 pcb_t* get_pcb();
 int find_available_pid();
 extern int prog_counter;
+extern int pid;
 
 #endif /* _SYSCALLS_H */

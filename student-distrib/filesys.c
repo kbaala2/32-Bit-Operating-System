@@ -157,7 +157,7 @@ int32_t close_f(int32_t fd){
  * Return Value: -1 if not found, 0 if found
  * Function: reads file */
 int32_t read_f(int32_t fd, void *buf, int32_t nbytes){
-    pcb_t* cur_pcb = get_pcb_from_pid(prog_counter - 1);
+    pcb_t* cur_pcb = get_pcb_from_pid(pid);
     uint32_t bread = read_data(cur_pcb->fd_arr[fd].inode_num, cur_pcb->fd_arr[fd].file_position, buf, nbytes); //read file data in read file function
     cur_pcb->fd_arr[fd].file_position += bread;
     return bread;
@@ -200,7 +200,7 @@ int32_t close_d(int32_t fd){
 int32_t read_d(int32_t fd, void *buf, int32_t nbytes){
     if(buf == NULL) return -1;         // null check
     int j = 0;
-    pcb_t* cur_pcb = get_pcb_from_pid(prog_counter - 1);
+    pcb_t* cur_pcb = get_pcb_from_pid(pid);
     uint32_t file_to_read = cur_pcb->fd_arr[fd].file_position++;
 
     
