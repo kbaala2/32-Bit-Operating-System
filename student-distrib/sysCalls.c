@@ -218,8 +218,7 @@ int32_t execute_terminal(const char* cmd, int terminal_id){
  * Function: system call that attempts to load and call a new program */
 int32_t sys_execute(const char* cmd){
     pcb_t* curr_pcb = get_pcb();
-    execute_terminal(cmd, curr_pcb->terminal_idx);
-    return 0;
+    return execute_terminal(cmd, curr_pcb->terminal_idx);
 }
 
 /* void init_file_operations()
