@@ -61,27 +61,27 @@ void pit_handler(void){
     tss.ss0 = KERNEL_DS;
     tss.esp0 = _8MB - (0x2000 * next_pcb->pid) - sizeof(int32_t);
     pid = next_pcb->pid;
-    set_act_terminal(next_pcb->terminal_idx);
+     set_act_terminal(next_pcb->terminal_idx);
 
 
     sti();
 
     //save current terminal esp and ebp
     asm volatile ("          \n\
-                 movl %%ebp, %0  \n\
-                 movl %%esp, %1  \n\
+                 movl %%ebp, %%eax  \n\
+                 movl %%esp, %%ebx  \n\
             "
-            :"=r"(cur_pcb->saved_ebp), "=r"(cur_pcb->saved_esp)
+            :"=a"(cur_pcb->saved_ebp), "=b"(cur_pcb->saved_esp)
             );
 
     //load in next process esp and ebp
     asm volatile ("          \n\
-                 movl %0, %%esp  \n\
-                 movl %1, %%ebp  \n\
+                 movl %%ebx, %%esp  \n\
+                 movl %%eax, %%ebp  \n\
                  leave           \n\
                  ret             \n\
             "
-            ::"r"(next_pcb->saved_esp), "r"(next_pcb->saved_ebp)
+            ::"b"(next_pcb->saved_esp), "a"(next_pcb->saved_ebp)
             );
 
     return;

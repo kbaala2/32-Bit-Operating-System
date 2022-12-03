@@ -67,9 +67,9 @@ int32_t terminal_write (int32_t fd, const void* buf, int32_t nbytes){
         if(result[i] == '\0') {
             continue;
         }
-        term_buffer[visible_term][i] = result[i];
+        term_buffer[act_term][i] = result[i];
 
-        putc(term_buffer[visible_term][i]);
+        putc(term_buffer[act_term][i]);
     }
     sti();  //enable interrupts
     return nbytes;  //return number of bytes written

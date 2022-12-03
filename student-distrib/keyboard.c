@@ -196,10 +196,10 @@ void keyboard_handler(void){
             if(scan_code == 0x0F){ 
                 kb_buffer[visible_term][count[visible_term]] = key_map[scan_code];
                 count[visible_term]++;
-                putc(' ');
-                putc(' ');
-                putc(' ');
-                putc(' ');
+                putc_display(' ');
+                putc_display(' ');
+                putc_display(' ');
+                putc_display(' ');
             }
             //check if scan_code is equal to scan_code for backspace
             else if(scan_code == 0x0E){
@@ -207,7 +207,7 @@ void keyboard_handler(void){
                     if(kb_buffer[visible_term][count[visible_term]-1] == '\t'){
                         tab_flag = 1;
                     }
-                    putc(key_map[scan_code]);
+                    putc_display(key_map[scan_code]);
                     count[visible_term]--;
                     kb_buffer[visible_term][count[visible_term]] = '\0';
                 }
@@ -423,13 +423,13 @@ void keyboard_handler(void){
                         default: shifted_char = (key_map[scan_code] - 32);
                             break;
                     }
-                    putc((char)shifted_char);
+                    putc_display((char)shifted_char);
                     kb_buffer[visible_term][count[visible_term]] = (char)shifted_char;
                     count[visible_term]++;
                 }
                 // no shift or caps lock enabled
                 else{
-                    putc(key_map[scan_code]);
+                    putc_display(key_map[scan_code]);
                     kb_buffer[visible_term][count[visible_term]] = key_map[scan_code];
                     count[visible_term]++;
                 }
@@ -439,7 +439,7 @@ void keyboard_handler(void){
         // if count is at kb_buffer limit (only room for enter) and scan_code is scan code for enter (0x1C)
         else if(count[visible_term] == 127 && scan_code == 0x1C){
             // enter_pressed = 1;
-            putc(key_map[scan_code]);
+            putc_display(key_map[scan_code]);
             kb_buffer[visible_term][count[visible_term]] = key_map[scan_code];
             count[visible_term] = 0; //reset count
         }
