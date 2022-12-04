@@ -9,6 +9,10 @@ volatile int BLOCK_FLAG = 0; //flag to tell read to block until next interrupt
 
 // unsigned int Log2n(unsigned int n);
 
+#define RTC_PORT 0x70 //RTC port
+#define RTC_DATA 0x71 //RTC data port
+#define RTC_REG_A 0x8A //RTC register A
+#define RTC_REG_B 0x0B //RTC register B
 
 /* void rtc_init(void);
  * Inputs: void
@@ -17,12 +21,12 @@ volatile int BLOCK_FLAG = 0; //flag to tell read to block until next interrupt
 void rtc_init(void) {
     /* sets the registers for the rtc */
     cli();
-    outb(0x0B, 0x70); //Select register B
-    char prev = inb(0x71); //read value at register B
-    outb(0x0B, 0x70); //set the index again
-    outb(prev | 0x40, 0x71);  //turn on bit 6 of reigster B
-    outb(0x8A, 0x70); //disable NMI
-    outb(0x06, 0x71); //set frequency to 1024
+    outb(RTC_REG_B, RTC_PORT); //Select register B
+    char prev = inb(RTC_DATA); //read value at register B
+    outb(RTC_REG_B, RTC_PORT); //set the index again
+    outb(prev | 0x40, RTC_DATA);  //turn on bit 6 of reigster B
+    outb(RTC_REG_A, RTC_PORT); //disable NMI
+    outb(0x06, RTC_DATA); //set frequency to 1024
     enable_irq(8); //RTC at irq 8
     sti();
 }
@@ -33,8 +37,8 @@ void rtc_init(void) {
  * Return Value: none
  * Function: Handles rtc interrupt and sends EOI*/
 void rtc_handler() {
-    outb(0x0C, 0x70); //select register C
-    inb(0x71); //throw away contents
+    outb(0x0C, RTC_PORT); //select register C
+    inb(RTC_DATA); //throw away contents
     //test_interrupts();
     BLOCK_FLAG = 1;
     send_eoi(8);
@@ -46,10 +50,10 @@ void rtc_handler() {
  * Function: resets rtc to 2hz*/
 int rtc_open(const uint8_t* filename){
     cli();
-    outb(0x8A, 0x70);		// set index to register A, disable NMI
-    char prev=inb(0x71);	// get initial value of register A
-    outb(0x8A, 0x70);		// reset index to A
-    outb((prev & 0xF0) | 0x0F, 0x71); //write only our rate to A. Note, rate is 0x0F, which sets rate to 2hz
+    outb(RTC_REG_A, RTC_PORT);		// set index to register A, disable NMI
+    char prev=inb(RTC_DATA);	// get initial value of register A
+    outb(RTC_REG_A, RTC_PORT);		// reset index to A
+    outb((prev & 0xF0) | 0x0F, RTC_DATA); //write only our rate to A. Note, rate is 0x0F, which sets rate to 2hz
     sti();
     return 0;
 }
@@ -65,7 +69,7 @@ int rtc_read(int32_t fd, void *buf, int32_t nbytes){
     while(!BLOCK_FLAG);
     BLOCK_FLAG = 1;
     //outb(0x0C, 0x70);	// select register C
-    //inb(0x71);		// just throw away contents
+    //inb(RTC_DATA);		// just throw away contents
     return 0; 
 }
 
@@ -114,34 +118,34 @@ int rtc_write(int32_t fd, const void *buf, int32_t nbytes){
     // }
 
     if(freq == hz_2){
-        new_rate = 15;
+        new_rate = 15; // sets rtc to 2 hz 
     }
     if(freq == hz_4){
-        new_rate = 14;
+        new_rate = 14; // sets rtc to 4 hz
     }
     if(freq == hz_8){
-        new_rate = 13;
+        new_rate = 13; // sets rtc to 8 hz
     }
     if(freq == hz_16){
-        new_rate = 12;
+        new_rate = 12; // sets rtc to 16 hz
     }
     if(freq == hz_32){
-        new_rate = 11;
+        new_rate = 11; // sets rtc to 32 hz
     }
     if(freq == hz_64){
-        new_rate = 10;
+        new_rate = 10; // sets rtc to 64 hz
     }
     if(freq == hz_128){
-        new_rate = 9;
+        new_rate = 9; // sets rtc to 128 hz
     }
     if(freq == hz_256){
-        new_rate = 8;
+        new_rate = 8; // sets rtc to 256 hz
     }
     if(freq == hz_512){
-        new_rate = 7;
+        new_rate = 7; // sets rtc to 512 hz
     }
     if(freq == hz_1024){
-        new_rate = 6;
+        new_rate = 6; // sets rtc to 1024 hz
     }
 
 
@@ -156,10 +160,10 @@ int rtc_write(int32_t fd, const void *buf, int32_t nbytes){
 
     /*set new frequency*/
     cli();
-    outb(0x8A, 0x70);		// set index to register A, disable NMI
-    char prev=inb(0x71);	// get initial value of register A
-    outb(0x8A, 0x70);		// reset index to A
-    outb((prev & 0xF0) | new_rate, 0x71); //write only our rate to A. Note, rate is 0x0F, which sets rate to freq
+    outb(RTC_REG_A, RTC_PORT);		// set index to register A, disable NMI
+    char prev=inb(RTC_DATA);	// get initial value of register A
+    outb(RTC_REG_A, RTC_PORT);		// reset index to A
+    outb((prev & 0xF0) | new_rate, RTC_DATA); //write only our rate to A. Note, rate is 0x0F, which sets rate to freq
     sti();
 
     return nbytes;

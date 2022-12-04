@@ -66,12 +66,12 @@ void pit_handler(void){
     next_pcb = get_pcb_from_pid(terminal_arr[next_term]);
 
     set_up_pid_map(next_pcb->pid); //sets up pid map
-    
+
     set_up_vidmap_terminals(_132MB, next_pcb->terminal_idx); //sets up vidmap
     
 
-    tss.ss0 = KERNEL_DS;
-    tss.esp0 = (0x800000-(PCB_SIZE*next_pcb->pid)-0x10);
+    tss.ss0 = KERNEL_DS; //sets up stack
+    tss.esp0 = (_8MB-(PCB_SIZE*next_pcb->pid)-0x10); // sets up esp
     //tss.esp0 = _8MB - (0x2000 * next_pcb->pid) - sizeof(int32_t); //set up stack and esp
     pid = next_pcb->pid;
     set_act_terminal(next_pcb->terminal_idx); //set active terminal
