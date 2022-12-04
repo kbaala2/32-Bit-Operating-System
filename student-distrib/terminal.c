@@ -11,6 +11,7 @@
  * Return Value: number of bytes that were read
  * Function: when enter is pressed, reads the data from the keyboard buffer into the general buffer */
 int32_t terminal_read (int32_t fd, void* buf, int32_t nbytes){
+    sti();
     int i = 0;
     if(buf == NULL) {   //return -1 if buffer is null
         return -1;
@@ -63,6 +64,16 @@ int32_t terminal_write (int32_t fd, const void* buf, int32_t nbytes){
     char* result = (char*)buf;
     int i = 0;
     int act_term = get_act_terminal();
+    // if(act_term == 0)
+    // {
+    //     putc_display('0');
+    // }
+    // if(act_term == 1) {
+    //     putc_display('1');
+    // }
+    // if(act_term == 2) {
+    //     putc_display('2');
+    // }
     for(i = 0; i < nbytes; i++){    //loop through each character in the buffer and output to screen
         if(result[i] == '\0') {
             continue;

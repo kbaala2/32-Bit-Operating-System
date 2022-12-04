@@ -108,6 +108,11 @@ int32_t execute_terminal(const char* cmd, int terminal_id){
     int x;
     uint8_t arg_buf[ARG_MAX];
 
+    if(cmd == NULL) {
+        return -1;
+    }
+
+    cli();
     //33 is max filename size
     for(x = 0; x < 34; x++){
         buffer[x] = '\0';   //clearing the copy buffer
@@ -223,6 +228,7 @@ int32_t execute_terminal(const char* cmd, int terminal_id){
     tss.esp0 = START_OF_USER - ((pid) * 0x1000) - sizeof(int32_t);    //sets the TSS esp0 to the kernel stack pointer
     pc->saved_ebp = tss.esp0;
     pc->saved_esp = tss.esp0;
+    sti();
     goto_user(USER_DS, stack_pointer, eflag_bitmask, USER_CS, prog_eip);    //call asm linkage function for iret (userspace)
     return 0;
 }
@@ -232,7 +238,8 @@ int32_t execute_terminal(const char* cmd, int terminal_id){
  * Return Value: return value of halt if sys_halt invoked
  * Function: system call that attempts to load and call a new program */
 int32_t sys_execute(const char* cmd){
-    pcb_t* curr_pcb = get_pcb();
+    int i;
+    pcb_t* curr_pcb = get_pcb(); 
     return execute_terminal(cmd, curr_pcb->terminal_idx);
 }
 
