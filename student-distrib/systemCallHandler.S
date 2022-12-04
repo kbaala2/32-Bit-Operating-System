@@ -56,16 +56,16 @@ sys_call_complete:
 
     iret    #return to user
 
-.align 4
-ret_to_exec:
-    pushl %ebp
-    movl %esp, %ebp
-    andl $0, %ebx
-    movl 16(%ebp), %ebx
-    movl %ebx, %eax #restoring status
-    movl 12(%ebp), %ebx
-    movl %ebx, %esp #restoring esp
-    movl 8(%ebp), %ebx
-    movl %ebx, %ebp #restoring ebp
-    leave
-    ret #return to execute return
+# .align 4
+# ret_to_exec:
+#     pushl %ebp
+#     movl %esp, %ebp
+#     andl $0, %ebx
+#     movl 16(%ebp), %ebx
+#     movl %ebx, %eax #restoring status
+#     movl 12(%ebp), %ebx
+#     movl %ebx, %esp #restoring esp
+#     movl 8(%ebp), %ebx
+#     movl %ebx, %ebp #restoring ebp
+#     leave
+#     ret #return to execute return

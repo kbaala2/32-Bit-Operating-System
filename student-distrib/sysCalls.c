@@ -152,7 +152,7 @@ int32_t execute_terminal(const char* cmd, int terminal_id){
     // }
     next = find_available_pid();
     if(next == -1){
-        return 0; //no available pids
+        return -1; //no available pids
     }
     
     tasks[next] = 1; //pid is being used
@@ -162,56 +162,67 @@ int32_t execute_terminal(const char* cmd, int terminal_id){
     set_prog_eip(buffer);   //find program's eip for iret
  
     pcb_t* pc;
+    pcb_t* par_pcb;
+    par_pcb = get_pcb_from_pid(pid);
     pc = get_pcb_from_pid(next);   
-    terminal_arr[terminal_id] = next;
+    pc->saved_ebp = (START_OF_USER-(0x1000*next)-0x10);
+    pc->saved_esp = (START_OF_USER-(0x1000*next)-0x10);
+    
     //get first available PCB from kernel stack
     strcpy((int8_t*)pc->args, (int8_t*)arg_buf);
-        pc->active = 1; //set PCB to active
-        if(terminal_arr[terminal_id] == -1){
-            pc->parent_pid = next;
-        }
-        // if(prog_counter == 0){
-        //    // pc->parent_pid = NULL;  //if PCB is the first program, set parent pid to null
-        //     pc->parent_pid = 0;
-        // }
-        else{
-            //just update to previous pid
-            pc->parent_pid = pid;  //otherwise make parent pid one less than current pid
-        }
-
-        pc->pid = next; //set pcb pid to new pid
-
-        //update program variables
-        pid = next;
-        pc->terminal_idx = terminal_id;
-
-        set_act_terminal(terminal_id); //will need to implement in lib and set up paging
-
+    pc->active = 1; //set PCB to active
+    if(terminal_arr[terminal_id] == -1){
+        pc->parent_pid = next;
+        pc->parent_ebp = (START_OF_USER-(0x1000*next)-0x10);
+        pc->parent_esp = (START_OF_USER-(0x1000*next)-0x10);
         
-     //   prog_counter++; //increment global program counter
-        asm volatile ("          \n\
-                     movl %%ebp, %%eax  \n\
-                     movl %%esp, %%ebx  \n\
-                "
-                :"=a"(pc->saved_ebp), "=b"(pc->saved_esp)
-                );  //saving program's ebp and esp
-        pc->fd_arr[0].flag = 1;
-        pc->fd_arr[1].flag = 1;
-        pc->fd_arr[0].inode_num = 0;
-        pc->fd_arr[1].inode_num = 0;
-        pc->fd_arr[0].file_position = 0;
-        pc->fd_arr[1].file_position = 0;    //initializing the file descriptor array for the first and second entries
-        
-        init_file_operations(); //calls helper function to initialize all possible file operations
-        pc->fd_arr[0].jmp_pointer = &stdin_file_op; 
-        pc->fd_arr[1].jmp_pointer = &stdout_file_op;    //set the fd array's function pointer to stdin and stdout for indexes 0 and 1 respectively
-        for(j = 2; j < 8; j++){
-            pc->fd_arr[j].flag = 0;
-            pc->fd_arr[j].inode_num = 0;
-            pc->fd_arr[j].file_position = 0;
-            pc->fd_arr[j].jmp_pointer = &bad_file_op;
-        }   //for the remaining 6 entries fill with bad file operations and set flags low
-    tss.esp0 = START_OF_USER - ((pid) * KERNEL_STACK_SIZE) - sizeof(int32_t);    //sets the TSS esp0 to the kernel stack pointer
+    }
+    // if(prog_counter == 0){
+    //    // pc->parent_pid = NULL;  //if PCB is the first program, set parent pid to null
+    //     pc->parent_pid = 0;
+    // }
+    else{
+        //just update to previous pid
+        pc->parent_pid = par_pcb->pid;  //otherwise make parent pid one less than current pid
+        pc->parent_esp = par_pcb->saved_esp;
+        pc->parent_ebp = par_pcb->saved_ebp;
+    }
+
+    pc->pid = next; //set pcb pid to new pid
+    terminal_arr[terminal_id] = next;
+    //update program variables
+    pid = next;
+    pc->terminal_idx = terminal_id;
+
+    set_act_terminal(terminal_id); //will need to implement in lib and set up paging
+
+    
+    //   prog_counter++; //increment global program counter
+    asm volatile ("          \n\
+                    movl %%ebp, %%eax  \n\
+                    movl %%esp, %%ebx  \n\
+            "
+            :"=a"(pc->parent_ebp), "=b"(pc->parent_esp)
+            );  //saving program's ebp and esp
+    pc->fd_arr[0].flag = 1;
+    pc->fd_arr[1].flag = 1;
+    pc->fd_arr[0].inode_num = 0;
+    pc->fd_arr[1].inode_num = 0;
+    pc->fd_arr[0].file_position = 0;
+    pc->fd_arr[1].file_position = 0;    //initializing the file descriptor array for the first and second entries
+    
+    init_file_operations(); //calls helper function to initialize all possible file operations
+    pc->fd_arr[0].jmp_pointer = &stdin_file_op; 
+    pc->fd_arr[1].jmp_pointer = &stdout_file_op;    //set the fd array's function pointer to stdin and stdout for indexes 0 and 1 respectively
+    for(j = 2; j < 8; j++){
+        pc->fd_arr[j].flag = 0;
+        pc->fd_arr[j].inode_num = 0;
+        pc->fd_arr[j].file_position = 0;
+        pc->fd_arr[j].jmp_pointer = &bad_file_op;
+    }   //for the remaining 6 entries fill with bad file operations and set flags low
+    tss.esp0 = START_OF_USER - ((pid) * 0x1000) - sizeof(int32_t);    //sets the TSS esp0 to the kernel stack pointer
+    pc->saved_ebp = tss.esp0;
+    pc->saved_esp = tss.esp0;
     goto_user(USER_DS, stack_pointer, eflag_bitmask, USER_CS, prog_eip);    //call asm linkage function for iret (userspace)
     return 0;
 }
@@ -305,8 +316,19 @@ int find_available_pid(){
  * Function: system call that terminates a process */
 int32_t sys_halt(uint8_t status){
     int i;
+    int32_t sesp;
+    int32_t sebp;
+    uint32_t stat_ret_val;
     pcb_t* cur_pcb = get_pcb_from_pid(pid); //gets the current program's PCB
     pcb_t* parent_pcb = get_pcb_from_pid(cur_pcb->parent_pid);
+        if (status == 15) {
+        stat_ret_val = 256;
+    }
+    
+    else {
+        stat_ret_val = (uint32_t)status;
+    }
+
      //prog_counter--; //decrement program counter
     // if(status == 15) {
     //     status = 256;
@@ -342,8 +364,23 @@ int32_t sys_halt(uint8_t status){
         cur_pcb->fd_arr[i].flag = 0;    //set all file operation flags to low
     }
     tss.ss0 = KERNEL_DS;    //set TSS ss0 to kernel data segment
-    tss.esp0 = START_OF_USER - ((parent_pcb->pid) * KERNEL_STACK_SIZE) - sizeof(int32_t);   //sets the TSS esp0 to the kernel stack pointer
-    ret_to_exec(cur_pcb->saved_ebp, cur_pcb->saved_esp, status);    //call asm linkage function for returning the execute sys call 
+    tss.esp0 = cur_pcb->parent_esp;
+  //  tss.esp0 = START_OF_USER - ((parent_pcb->pid) * KERNEL_STACK_SIZE) - sizeof(int32_t);   //sets the TSS esp0 to the kernel stack pointer
+    // ret_to_exec(cur_pcb->saved_ebp, cur_pcb->saved_esp, status);    //call asm linkage function for returning the execute sys call 
+    sesp = cur_pcb->parent_esp;
+    sebp = cur_pcb->parent_ebp;
+    asm volatile("          \n\
+            movl %0, %%ebp   \n\
+            movl %1, %%esp   \n\
+            movl %2, %%eax   \n\
+            leave               \n\
+            ret                 \n\
+        "
+        :
+        :"r"(sebp), "r"(sesp), "r"(stat_ret_val)
+        : "cc", "%eax", "%esp", "%ebp"
+        );
+
     return 0;
 }
 

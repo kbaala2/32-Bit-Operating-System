@@ -47,6 +47,8 @@ typedef struct __attribute__ ((packed)) file_descriptor {
 typedef struct __attribute__ ((packed)) pcb {
     int pid;
     int parent_pid;
+    uint32_t parent_esp;
+    uint32_t parent_ebp;
     uint32_t saved_esp;
     uint32_t saved_ebp;
     int active;
