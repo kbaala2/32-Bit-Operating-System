@@ -12,7 +12,6 @@
  * Function: when enter is pressed, reads the data from the keyboard buffer into the general buffer */
 int32_t terminal_read (int32_t fd, void* buf, int32_t nbytes){
     sti();
-    int i = 0;
     if(buf == NULL) {   //return -1 if buffer is null
         return -1;
     }
@@ -25,24 +24,14 @@ int32_t terminal_read (int32_t fd, void* buf, int32_t nbytes){
 
     while(!enter_pressed[visible_term]){} //do nothing if enter is not pressed
 
-    memset(term_buffer[visible_term], 0, sizeof(term_buffer[visible_term]));
-    memcpy(term_buffer[visible_term], kb_buffer[visible_term], sizeof(kb_buffer[visible_term]));
-    memset(kb_buffer[visible_term], 0, sizeof(kb_buffer[visible_term]));
-
     char* result = (char*)buf;
-    int act_term = get_act_terminal();
-    
-    for(i = 0; i < nbytes; i++){    //loop through each character in keyboard buffer once enter is pressed
-        result[i] = term_buffer[act_term][i];   //copy contents to general buffer
-      //  kb_buffer[act_term][i] = '\0';    //clear contents of keyboard buffer
-        if(result[i] == '\n') {
-            nbytes = i + 1; //when we reach the newline character, set nbytes to the amount of bytes read at that point
-            break;
-        }
-    }
+    int act_term = get_act_terminal();  //gets currently active terminal
+
+    memcpy(result, term_buffer[act_term], nbytes);  //copy terminal buffer into buffer
+
     enter_pressed[act_term] = 0;  //reset enter flag and index for keyboard buffer
     count[visible_term] = 0;
-    return nbytes;  //return number of bytes read
+    return strlen(result);  //return number of bytes read
 }
 
 /* int32_t terminal_write(int32_t fd, void* buf, int32_t nbytes)
@@ -63,24 +52,19 @@ int32_t terminal_write (int32_t fd, const void* buf, int32_t nbytes){
     }
     char* result = (char*)buf;
     int i = 0;
-    int act_term = get_act_terminal();
-    // if(act_term == 0)
-    // {
-    //     putc_display('0');
-    // }
-    // if(act_term == 1) {
-    //     putc_display('1');
-    // }
-    // if(act_term == 2) {
-    //     putc_display('2');
-    // }
-    for(i = 0; i < nbytes; i++){    //loop through each character in the buffer and output to screen
-        if(result[i] == '\0') {
+    int act_term = get_act_terminal();  //gets currently active terminal
+
+    int copy_limit = sizeof(term_buffer[act_term]);
+    if(nbytes < copy_limit){
+        copy_limit = nbytes;    //adjusts the amount of bytes to be copied
+    }
+    memcpy(term_buffer[act_term], result, copy_limit);  //copy the buffer into the printed buffer
+    term_buffer[act_term][copy_limit] = 0;
+    for(i = 0; i < copy_limit; i++){
+        if(term_buffer[act_term][i] == '\0') {  //ignore null chars
             continue;
         }
-        term_buffer[act_term][i] = result[i];
-
-        putc(term_buffer[act_term][i]);
+        putc(term_buffer[act_term][i]); //put printed buffer onto screen
     }
     sti();  //enable interrupts
     return nbytes;  //return number of bytes written

@@ -10,6 +10,7 @@
 #define _8MB 0x800000
 #define PCB_SIZE 0x1000
 #define _1MB 0x100000
+#define _132MB 0x8400000
 
 int8_t prog_timer = 0;
 int terminal_arr[MAX_TERMINALS];
@@ -41,6 +42,8 @@ void pit_init(void){
  * Function: handles the pit interrupts*/
 void pit_handler(void){
     int next_term;
+    pcb_t *cur_pcb;
+    pcb_t *next_pcb;
 
     cli();
     //send EOI
@@ -52,23 +55,23 @@ void pit_handler(void){
         execute_terminal("shell", 0);
     } 
 
-    pcb_t *cur_pcb = get_pcb_from_pid(pid); //get current pcb
-
-
+    cur_pcb = get_pcb_from_pid(pid); //get current pcb
     next_term = get_next_terminal(cur_pcb->terminal_idx);
+
+
     while(terminal_arr[next_term] == -1){  // gets next termianl and update other terminals
         next_term = get_next_terminal(next_term);
     }
 
-    pcb_t* next_pcb = get_pcb_from_pid(terminal_arr[next_term]);
+    next_pcb = get_pcb_from_pid(terminal_arr[next_term]);
 
     set_up_pid_map(next_pcb->pid); //sets up pid map
-    set_up_vidmap_terminals(132 * _1MB, next_pcb->terminal_idx); //sets up vidmap
+
+    set_up_vidmap_terminals(_132MB, next_pcb->terminal_idx); //sets up vidmap
     
 
-    tss.ss0 = KERNEL_DS;
-    tss.esp0 = (0x800000-(0x1000*next_pcb->pid)-0x10);
-    //tss.esp0 = _8MB - (0x2000 * next_pcb->pid) - sizeof(int32_t); //set up stack and esp
+    tss.ss0 = KERNEL_DS; //sets up stack
+    tss.esp0 = (_8MB-(PCB_SIZE*next_pcb->pid)-sizeof(int32_t)); // sets up esp
     pid = next_pcb->pid;
     set_act_terminal(next_pcb->terminal_idx); //set active terminal
 
@@ -87,7 +90,7 @@ void pit_handler(void){
                  movl %0, %%esp  \n\
                  movl %1, %%ebp  \n\
             "
-           : :"r"(next_pcb->saved_esp), "r"(next_pcb->saved_ebp)
+            : :"r"(next_pcb->saved_esp), "r"(next_pcb->saved_ebp)
             );
 
 

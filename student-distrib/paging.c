@@ -4,6 +4,8 @@
 #include "sysCalls.h"
 
 #define VIDEO       0xB8000 //video memory address in physical memory
+#define START_OF_USER   0x800000
+#define START_OF_KERNEL 0x400000
 #define VIDEO_MEM_INDEX 184
 #define NUM_ENTRIES 1024
 #define START_OF_KERNEL 0x400000
@@ -188,7 +190,7 @@ void set_up_pid_map(int pid){
     pde[32].page_size = 1;
     pde[32].user_supervisor = 1;
     pde[32].read_write = 1;
-    pde[32].page_table_base_addr = ((pid * 0x400000) + 0x800000)>> 12; //multiple by 4mb and add 8 mb to get to the correct page directory entry
+    pde[32].page_table_base_addr = ((pid * START_OF_KERNEL) + START_OF_USER)>> 12; //multiple by 4mb and add 8 mb to get to the correct page directory entry
     flush_tlb();
 }
 

@@ -13,6 +13,7 @@
 #define EXEC_BYTE_3 0x4C
 #define EXEC_BYTE_4 0x46
 #define PROG_IMAGE 0x08048000
+#define PCB_SIZE 0x1000
 #define PROG_IMAGE_OFFSET 0x8048018
 #define ARG_MAX 128
 #define FD_MIN 1
@@ -170,16 +171,16 @@ int32_t execute_terminal(const char* cmd, int terminal_id){
     pcb_t* par_pcb;
     par_pcb = get_pcb_from_pid(pid);
     pc = get_pcb_from_pid(next);   
-    pc->saved_ebp = (START_OF_USER-(0x1000*next)-0x10);
-    pc->saved_esp = (START_OF_USER-(0x1000*next)-0x10);
+    pc->saved_ebp = (START_OF_USER-(PCB_SIZE*next)-sizeof(int32_t));
+    pc->saved_esp = (START_OF_USER-(PCB_SIZE*next)-sizeof(int32_t));
     
     //get first available PCB from kernel stack
     strcpy((int8_t*)pc->args, (int8_t*)arg_buf);
     pc->active = 1; //set PCB to active
     if(terminal_arr[terminal_id] == -1){
         pc->parent_pid = next;
-        pc->parent_ebp = (START_OF_USER-(0x1000*next)-0x10);
-        pc->parent_esp = (START_OF_USER-(0x1000*next)-0x10);
+        pc->parent_ebp = (START_OF_USER-(PCB_SIZE*next)-sizeof(int32_t));
+        pc->parent_esp = (START_OF_USER-(PCB_SIZE*next)-sizeof(int32_t));
         
     }
     // if(prog_counter == 0){
@@ -225,7 +226,7 @@ int32_t execute_terminal(const char* cmd, int terminal_id){
         pc->fd_arr[j].file_position = 0;
         pc->fd_arr[j].jmp_pointer = &bad_file_op;
     }   //for the remaining 6 entries fill with bad file operations and set flags low
-    tss.esp0 = START_OF_USER - ((pid) * 0x1000) - sizeof(int32_t);    //sets the TSS esp0 to the kernel stack pointer
+    tss.esp0 = START_OF_USER - ((pid) * PCB_SIZE) - sizeof(int32_t);    //sets the TSS esp0 to the kernel stack pointer
     pc->saved_ebp = tss.esp0;
     pc->saved_esp = tss.esp0;
     sti();
@@ -238,7 +239,6 @@ int32_t execute_terminal(const char* cmd, int terminal_id){
  * Return Value: return value of halt if sys_halt invoked
  * Function: system call that attempts to load and call a new program */
 int32_t sys_execute(const char* cmd){
-    int i;
     pcb_t* curr_pcb = get_pcb(); 
     return execute_terminal(cmd, curr_pcb->terminal_idx);
 }

@@ -3,7 +3,7 @@
 
 #define MAX_PROCESSES 6
 #define MAX_TERMINALS 3
-#define MSB_SHIFT 0x08
+#define MSB_SHIFT 8
 #define LSB_MASK 0xFF
 #define TAR_FREQ 50
 #define PIT_FREQ 1193180

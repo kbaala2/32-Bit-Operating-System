@@ -143,6 +143,12 @@ void keyboard_handler(void){
     32-127, and range for enter, tab, backspace is between 8 and 10*/
     if((key_map[scan_code] >= 32) || (key_map[scan_code] >= 8 && key_map[scan_code] <= 10) || (scan_code == 0x3B || scan_code == 0x3C || scan_code == 0x3D)){
 
+        if(enter_pressed[visible_term]){    //enter is pressed on the current visible terminal
+            memset(term_buffer[visible_term], 0, sizeof(term_buffer[visible_term]));
+            memcpy(term_buffer[visible_term], kb_buffer[visible_term], sizeof(kb_buffer[visible_term]));
+            memset(kb_buffer[visible_term], 0, sizeof(kb_buffer[visible_term]));    //clear printed buffer, copy keyboard buffer into printed buffer, and clear keyboard buffer
+        }
+
         //ctrl + l, scan_code for l is 0x26
         if(ctrl_flag == 1 && scan_code == 0x26){
             //clear_screen = 1;
@@ -155,19 +161,18 @@ void keyboard_handler(void){
         }
 
         
-        //switch to terminal 1
-        else if(alt_flag && scan_code == 0x3B){
-            
+        //switch to terminal 1 (alt-F1)
+        else if(alt_flag && scan_code == 0x3B){ 
             set_display_terminal(0);
         }
 
-        //switch to terminal 2
+        //switch to terminal 2 (alt-F2)
         else if(alt_flag && scan_code == 0x3C){
             set_display_terminal(1);
             if(!terminal_2_active){
                 if(find_available_pid() != -1){
                     terminal_2_active = 1;
-                    execute_terminal((const char*)"shell", 1);
+                    execute_terminal((const char*)"shell", 1);  //start new shell on switched terminal if doesn't already exist
                 }
                 else{
                     return;
@@ -175,14 +180,13 @@ void keyboard_handler(void){
             }
         }
 
-        //switch to terminal 3
+        //switch to terminal 3 (alt-F3)
         else if(alt_flag && scan_code == 0x3D){
             set_display_terminal(2);
-            
             if(!terminal_3_active){
                 if(find_available_pid() != -1){
                     terminal_3_active = 1;
-                    execute_terminal((const char*)"shell", 2);
+                    execute_terminal((const char*)"shell", 2);  //start new shell on switched terminal if doesn't already exist
                 }
                 else{
                     return;
